@@ -28,7 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={geistSans.className} suppressHydrationWarning>
       <body className="bg-background text-foreground">
-        <ClerkProvider touchSession={false}>
+        <ClerkProvider
+          touchSession={false}
+          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        >
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
