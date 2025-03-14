@@ -1,8 +1,17 @@
 import { createClient } from "@/utils/supabase/server";
+import { auth, currentUser } from '@clerk/nextjs/server'
 
-export async function GET(
-    request: Request) {
+
+export async function GET(request: Request) {
     try {
+        const { userId, getToken } = await auth()
+
+        if (!userId) {
+            return new Response('Unauthorized', { status: 401 })
+        }
+
+        const token = await getToken({ template: 'supabase' })
+
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('meetings')
@@ -20,9 +29,16 @@ export async function GET(
     }
 }
 
-export async function POST(
-    request: Request) {
+export async function POST(request: Request) {
     try {
+        const { userId, getToken } = await auth()
+
+        if (!userId) {
+            return new Response('Unauthorized', { status: 401 })
+        }
+
+        const token = await getToken({ template: 'supabase' })
+
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('meetings')

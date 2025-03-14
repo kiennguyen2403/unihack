@@ -1,9 +1,9 @@
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
-
 import "./globals.css";
 import PageWrapper from "@/components/common/PageWrapper";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -28,15 +28,17 @@ export default function RootLayout({
   return (
     <html lang="en" className={geistSans.className} suppressHydrationWarning>
       <body className="bg-background text-foreground">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {/* {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />} */}
-          <PageWrapper>{children}</PageWrapper>
-        </ThemeProvider>
+        <ClerkProvider touchSession={false}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {/* {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />} */}
+            <PageWrapper>{children}</PageWrapper>
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
