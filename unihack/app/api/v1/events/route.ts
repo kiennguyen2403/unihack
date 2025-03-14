@@ -1,8 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { auth, currentUser } from '@clerk/nextjs/server';
 
-
-export async function GET (request: Request) {
+export async function GET(request: Request) {
     try {
         const { userId, getToken } = await auth()
 
@@ -14,8 +13,9 @@ export async function GET (request: Request) {
 
         const supabase = await createClient();
         const { data, error } = await supabase
-            .from('meetings')
-            .select('*');
+            .from('events')
+            .select('*')
+            .eq('userId', userId);
         if (error) {
             throw error;
         }
@@ -29,7 +29,7 @@ export async function GET (request: Request) {
     }
 }
 
-export async function POST (request: Request) {
+export async function POST(request: Request) {
     try {
         const { userId, getToken } = await auth()
 
@@ -40,8 +40,9 @@ export async function POST (request: Request) {
         const token = await getToken({ template: 'supabase' })
 
         const supabase = await createClient();
+
         const { data, error } = await supabase
-            .from('meetings')
+            .from('events')
             .insert(await request.json());
         if (error) {
             throw error;
@@ -55,4 +56,3 @@ export async function POST (request: Request) {
         });
     }
 }
-
