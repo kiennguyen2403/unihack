@@ -33,18 +33,16 @@ const ResultIdeaCard = ({
       <CardContent>
         <p className="text-muted-foreground">
           {explanation
-            .replace("Con:", "<br/>Con:")
+            .replace(/\./g, ".<br/>")
+            .replace("Pro:", "💡 Pro:")
+            .replace("Con:", "⚠️ Con:")
             .split("<br/>")
-            .map((part, i) =>
-              i === 0 ? (
-                part
-              ) : (
-                <span key={i}>
-                  <br key={i} />
-                  {part}
-                </span>
-              )
-            )}
+            .map((part, i) => (
+              <span key={i}>
+                {part}
+                {i < explanation.split(/\./g).length - 1 && <br />}
+              </span>
+            ))}
         </p>
       </CardContent>
     </Card>

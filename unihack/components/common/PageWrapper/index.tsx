@@ -19,7 +19,7 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       </main>
-      <PageFooter />
+      {["/", "/user"].includes(window.location.pathname) && <PageFooter />}
     </Provider>
   );
 };

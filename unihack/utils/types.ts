@@ -1,6 +1,8 @@
 export interface BrainstormResult {
   title: string;
   explanation: string;
+  id?: number;
+  meeting_id?: number;
 }
 
 export interface BrainstormResultMetadata {

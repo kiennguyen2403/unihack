@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import { fetchResult } from "@/store/slices/roomSlice";
+import { fetchResult, getRoomDetails } from "@/store/slices/roomSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import ResultIdeaCard from "./ResultIdeaCard";
@@ -24,6 +24,7 @@ export default function ResultPage() {
     if (id) {
       if (!result) {
         dispatch(fetchResult(id));
+        dispatch(getRoomDetails(parseInt(id)));
       }
     }
   }, [dispatch, id, result]);
@@ -56,7 +57,7 @@ export default function ResultPage() {
         </div>
       )}
 
-      {!result || !resultMetadata ? (
+      {!result ? (
         <div className="container mx-auto p-6">
           <Card>
             <CardContent className="p-6">
@@ -80,17 +81,19 @@ export default function ResultPage() {
               />
             ))}
           </div>
-          <Card className="w-full">
-            <CardHeader className="py-3">
-              <CardTitle className="text-sm">Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="py-2">
-              <p className="text-muted-foreground text-xs">
-                {resultMetadata?.additionalInfo ||
-                  "No additional info available"}
-              </p>
-            </CardContent>
-          </Card>
+          {resultMetadata && (
+            <Card className="w-full">
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm">Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="py-2">
+                <p className="text-muted-foreground text-xs">
+                  {resultMetadata.additionalInfo ||
+                    "No additional info available"}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>
