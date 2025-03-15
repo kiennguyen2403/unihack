@@ -14,7 +14,7 @@ export async function GET(
         const { searchParams } = new URL(req.url);
         const question = searchParams.get('question');
         const db = createDataStaxClient();
-        const collection = db.collection(`meetings ${id}`);
+        const collection = db.collection(`meeting${id}`);
         const ideas = collection.find({
             sort: { $vectorize: question },
             limit: 3,

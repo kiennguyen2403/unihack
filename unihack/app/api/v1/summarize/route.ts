@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
             title,
             ideas,
         } = await req.json();
-        const collection = await db.createCollection<Idea>(`meeting ${meetingId}`, {
+        const collection = await db.createCollection<Idea>(`meeting${meetingId}`, {
             vector: {
                 service: {
                     provider: 'nvidia',

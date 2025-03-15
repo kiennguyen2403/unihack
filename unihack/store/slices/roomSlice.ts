@@ -245,7 +245,7 @@ export const endSessionAndGetResult = createAsyncThunk(
 
       // Save ideas and summary concurrently with Promise.all
       const [ideasResponse, summaryResponse] = await Promise.all([
-        fetch(`/api/v1/ideas/meeting`, {
+        fetch(`/api/v1/ideas/meetings`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
