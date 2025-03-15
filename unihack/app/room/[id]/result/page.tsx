@@ -21,9 +21,11 @@ export default function ResultPage() {
 
   useEffect(() => {
     if (id) {
-      dispatch(fetchResult(id));
+      if (!result) {
+        dispatch(fetchResult(id));
+      }
     }
-  }, [dispatch, id]);
+  }, [dispatch, id, result]);
 
   if (loadingResult) {
     return (
