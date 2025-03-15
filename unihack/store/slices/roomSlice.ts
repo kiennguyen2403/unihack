@@ -1,5 +1,4 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { createClient } from "@/utils/supabase/client";
 import {
   BrainstormResult,
   BrainstormResultMetadata,
@@ -18,6 +17,7 @@ interface RoomState {
   createdRoomId: string | null;
   roomDetails: Meeting | null;
   loading: boolean;
+  pastRooms: Meeting[];
 }
 
 const initialState: RoomState = {
@@ -30,6 +30,7 @@ const initialState: RoomState = {
   createdRoomId: null,
   roomDetails: null,
   loading: false,
+  pastRooms: [],
 };
 
 const roomSlice = createSlice({
@@ -76,6 +77,9 @@ const roomSlice = createSlice({
       }));
       console.log("results", results);
       state.result = results;
+    },
+    setPastRooms: (state, action: PayloadAction<Meeting[]>) => {
+      state.pastRooms = action.payload;
     },
   },
 });
@@ -285,6 +289,22 @@ export const endSessionAndGetResult = createAsyncThunk(
   }
 );
 
+export const fetchPastRooms = createAsyncThunk(
+  "room/fetchPastRooms",
+  async (_, { dispatch }) => {
+    try {
+      dispatch(setLoading(true));
+      const response = await fetch(`/api/v1/meetings`);
+      const data = await response.json();
+      dispatch(setPastRooms(data));
+    } catch (error) {
+      console.error("Error fetching past rooms:", error);
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+);
+
 export const {
   clearRoom,
   updateGoal,
@@ -293,5 +313,6 @@ export const {
   setCreatedRoomId,
   setRoomDetails,
   setStoredResult,
+  setPastRooms,
 } = roomSlice.actions;
 export default roomSlice.reducer;

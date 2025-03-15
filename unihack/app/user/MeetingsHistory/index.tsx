@@ -1,20 +1,29 @@
-import { Meeting } from "@/utils/types";
+"use client";
+
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn, formatDate } from "@/lib/utils";
 import Link from "next/link";
+import { fetchPastRooms } from "@/store/slices/roomSlice";
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/store";
 interface MeetingsHistoryProps {
-  meetings: Meeting[];
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
 }
 
 export default function MeetingsHistory({
-  meetings,
   collapsed,
   setCollapsed,
 }: MeetingsHistoryProps) {
+  const { pastRooms } = useAppSelector((state) => state.room);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(fetchPastRooms());
+  }, [dispatch]);
+
   return (
     <div
       className={cn(
@@ -33,29 +42,38 @@ export default function MeetingsHistory({
 
       <div className={cn(collapsed ? "hidden" : "p-4")}>
         <h2 className="text-sm font-semibold mb-8">Meeting History</h2>
-        <ScrollArea className="h-[calc(100vh-100px)]">
-          <div className="space-y-3">
-            {meetings.map((meeting) => (
-              <Button
-                key={meeting.id}
-                variant="ghost"
-                className="w-full justify-start text-sm font-normal"
-                onClick={() => {
-                  setCollapsed(true);
-                }}
-              >
-                <Link href={`/chat/${meeting.id}`} className="w-full">
-                  <div className="flex flex-col items-start gap-1 py-2">
-                    <span className="font-bold">{meeting.title}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(meeting.created_at)}
-                    </span>
-                  </div>
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </ScrollArea>
+        {pastRooms && (
+          <ScrollArea className="h-[calc(100vh-100px)]">
+            <div className="space-y-3">
+              {pastRooms
+                .filter((meeting) => meeting.goal)
+                .sort(
+                  (a, b) =>
+                    new Date(b.created_at).getTime() -
+                    new Date(a.created_at).getTime()
+                )
+                .map((meeting) => (
+                  <Button
+                    key={meeting.id}
+                    variant="ghost"
+                    className="w-full justify-start text-sm font-normal"
+                    onClick={() => {
+                      setCollapsed(true);
+                    }}
+                  >
+                    <Link href={`/chat/${meeting.id}`} className="w-full">
+                      <div className="flex flex-col items-start gap-1 py-2">
+                        <span className="font-bold">{meeting.goal}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(meeting.created_at)}
+                        </span>
+                      </div>
+                    </Link>
+                  </Button>
+                ))}
+            </div>
+          </ScrollArea>
+        )}
       </div>
     </div>
   );
