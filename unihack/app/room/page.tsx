@@ -15,7 +15,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { createRoom } from "@/store/slices/roomSlice";
-import { updateHostData, updateMemberData } from "@/store/slices/userSlice";
+import {
+  clearUserData,
+  updateHostData,
+  updateMemberData,
+} from "@/store/slices/userSlice";
 
 const CreateRoomPage = () => {
   const [goal, setGoal] = useState("");
@@ -42,6 +46,10 @@ const CreateRoomPage = () => {
       // TODO: call the event to set host here
     }
   }, [createdRoomId]);
+
+  useEffect(() => {
+    dispatch(clearUserData());
+  }, []);
 
   return (
     <div className="w-[50%] flex justify-center items-center min-h-[80vh]">

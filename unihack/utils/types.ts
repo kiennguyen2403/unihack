@@ -13,3 +13,8 @@ export interface Meeting {
   goal: string;
   created_at: string;
 }
+
+export interface IdeaBubble {
+  idea: string;
+  userId: string;
+}

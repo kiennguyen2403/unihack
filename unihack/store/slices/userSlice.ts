@@ -57,6 +57,12 @@ const userSlice = createSlice({
         state.roomId = roomId;
       }
     },
+    clearUserData: (state) => {
+      state.role = null;
+      state.roomId = null;
+      localStorage.removeItem(THUBBLE_ROLE_KEY);
+      localStorage.removeItem(THUBBLE_ROOM_ID_KEY);
+    },
   },
 });
 
@@ -70,5 +76,6 @@ export const {
   updateHostData,
   updateMemberData,
   getDataFromLocalStorage,
+  clearUserData,
 } = userSlice.actions;
 export default userSlice.reducer;

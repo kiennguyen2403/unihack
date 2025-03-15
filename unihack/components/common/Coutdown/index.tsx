@@ -1,51 +1,23 @@
 import { useEffect, useState } from "react";
 
 const Countdown = ({ onEnd }: { onEnd: () => void }) => {
-  const [timeLeft, setTimeLeft] = useState(3 * 60 * 1000); // 3 minutes in milliseconds
-  const [isEnded, setIsEnded] = useState(false);
+  const [endTime, setEndTime] = useState(Date.now() + 30 * 1000); // Set end time 3 minutes from now
 
   useEffect(() => {
-    // Add beforeunload event listener for refresh
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = ""; // Required for Chrome
-      return "Are you sure you want to leave? The timer will be reset.";
-    };
-
-    // Add popstate event listener for back button
-    const handlePopState = (e: PopStateEvent) => {
-      e.preventDefault();
-      const confirmLeave = window.confirm(
-        "Are you sure you want to leave? The timer will be reset."
-      );
-      if (!confirmLeave) {
-        window.history.pushState(null, "", window.location.pathname);
-      }
-    };
-
-    // Push initial state to enable back button detection
-    window.history.pushState(null, "", window.location.pathname);
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    window.addEventListener("popstate", handlePopState);
-
-    if (timeLeft <= 0) {
-      setIsEnded(true);
-      onEnd();
-      return;
-    }
-
     const timer = setInterval(() => {
-      setTimeLeft((prevTime) => prevTime - 10); // Decrease by 10ms
+      const timeLeft = endTime - Date.now();
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        onEnd();
+      }
     }, 10);
 
     return () => {
       clearInterval(timer);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.removeEventListener("popstate", handlePopState);
     };
-  }, [timeLeft, onEnd]);
+  }, [endTime, onEnd]);
 
+  const timeLeft = Math.max(0, endTime - Date.now());
   const minutes = Math.floor(timeLeft / (60 * 1000));
   const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
   const milliseconds = Math.floor((timeLeft % 1000) / 10);
