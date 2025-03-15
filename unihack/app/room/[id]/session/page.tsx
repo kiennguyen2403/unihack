@@ -11,10 +11,12 @@ import {
   CardContent,
   CardDescription,
 } from "@/components/ui/card";
+import Countdown from "@/components/common/Coutdown";
 
 const SessionPage = () => {
   const [ideas, setIdeas] = useState<string[]>([]);
   const [currentIdea, setCurrentIdea] = useState("");
+  const [isEnded, setIsEnded] = useState(false);
   const goal = useAppSelector((state) => state.room.goal);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -29,16 +31,19 @@ const SessionPage = () => {
     <div className="w-full flex justify-center items-center min-h-[80vh]">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">
-            Brainstorming Session
-          </CardTitle>
           <CardDescription className="text-center">
-            Goal: {goal || "No goal set"}
+            Brainstorming Session
           </CardDescription>
+          <CardTitle className="text-2xl text-center">
+            {goal || "No goal set"}
+          </CardTitle>
+          <div className="flex justify-center items-center">
+            <Countdown onEnd={() => setIsEnded(true)} />
+          </div>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="min-h-[200px] bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-6">
+          <div className="min-h-[60vh] bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-6">
             <div className="flex flex-wrap gap-4">
               {ideas.map((idea, index) => (
                 <div

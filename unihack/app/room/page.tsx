@@ -23,6 +23,7 @@ const CreateRoomPage = () => {
   const dispatch = useAppDispatch();
 
   const handleCreateRoom = () => {
+    // TODO: dispatch a boolean to indicate master of the room
     if (!goal.trim()) return;
     const newRoomId = Date.now().toString(); // Temporary implementation
     dispatch(createRoom({ roomId: newRoomId, goal: goal.trim() }));
