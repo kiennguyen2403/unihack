@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/store";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,12 @@ import {
   CardContent,
   CardDescription,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { updateGoal } from "@/store/slices/roomSlice";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 
 const RoomPage = () => {
   const { roomId, goal } = useAppSelector((state) => state.room);
@@ -22,6 +24,7 @@ const RoomPage = () => {
   const dispatch = useAppDispatch();
   const [editableGoal, setEditableGoal] = useState(goal || "");
   const [isEditing, setIsEditing] = useState(false);
+  const channel = useRef<RealtimeChannel | null>(null);
 
   const handleEditGoal = () => {
     setIsEditing(true);
@@ -34,6 +37,36 @@ const RoomPage = () => {
     }
     setIsEditing(false);
   };
+
+  useEffect(() => {
+    if (!channel.current) {
+      const client = createClient();
+      channel.current = client.channel(`waitingroom:${roomId}`, {
+        config: {
+          broadcast: {
+            self: true,
+          },
+        },
+      });
+
+      channel.current
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "events" },
+          (payload) => {
+            {
+              console.log("Received payload", payload);
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      channel.current?.unsubscribe();
+      channel.current = null;
+    };
+  }, []);
 
   return (
     <div className="w-[50%] flex justify-center items-center min-h-[80vh]">
@@ -57,10 +90,10 @@ const RoomPage = () => {
             </div>
             {isEditing ? (
               <div className="flex gap-2 mt-2">
-                <Input
+                {/* <Input
                   value={editableGoal}
                   onChange={(e) => setEditableGoal(e.target.value)}
-                />
+                /> */}
                 <Button onClick={handleSaveGoal}>Save</Button>
               </div>
             ) : (
