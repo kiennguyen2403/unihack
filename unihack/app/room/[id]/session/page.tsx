@@ -14,6 +14,7 @@ import {
 import Countdown from "@/components/common/Coutdown";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 import { TypingBubble } from "@/components/common/TypingBubble";
 import { Idea } from "@/utils/types";
 import IdeaBall from "@/components/common/IdeaBall";
@@ -31,6 +32,7 @@ const SessionPage = () => {
   const [currentIdea, setCurrentIdea] = useState("");
 
   const [isEnded, setIsEnded] = useState(false);
+  const router = useRouter();
   const [isTimesUp, setIsTimesUp] = useState(false);
   const channel = useRef<RealtimeChannel | null>(null);
   const [someoneIsTyping, setSomeoneIsTyping] = useState(false);
@@ -96,7 +98,7 @@ const SessionPage = () => {
       if (status === "SUBSCRIBED") {
         console.log("Successfully subscribed to channel");
       } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
-        // console.error("Channel error:", status);
+        router.push(`/room/${roomId}/result`);
       }
     });
 

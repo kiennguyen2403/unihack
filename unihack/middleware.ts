@@ -12,8 +12,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // Redirect authenticated users from root (/) to /user
   if (userId && req.nextUrl.pathname === "/") {
-    const userUrl = new URL("/user", req.url);
-    return NextResponse.redirect(userUrl);
+    const homeUrl = new URL("/home", req.url);
+    return NextResponse.redirect(homeUrl);
   }
 
   // Protect non-public routes

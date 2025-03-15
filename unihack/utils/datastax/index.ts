@@ -1,4 +1,4 @@
-import { DataAPIClient, Db } from "@datastax/astra-db-ts";
+import { DataAPIClient, Db, VectorizeDoc } from "@datastax/astra-db-ts";
 
 export function createDataStaxClient(): Db {
     const { ASTRA_DB_API_ENDPOINT: endpoint, ASTRA_DB_APPLICATION_TOKEN: token } =
@@ -22,4 +22,8 @@ export function createDataStaxClient(): Db {
 }
 
 
+export interface Idea extends VectorizeDoc {
+    value: string;
+    risk_level: number;
+}
 

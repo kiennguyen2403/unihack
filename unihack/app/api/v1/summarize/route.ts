@@ -1,19 +1,30 @@
-import { createDataStaxClient } from "@/utils/datastax";
-import { NextRequest } from "next/server"; 
+import { createDataStaxClient, Idea } from "@/utils/datastax";
+import { vector } from "@datastax/astra-db-ts";
+import { NextRequest } from "next/server";
+
 
 export async function POST(req: NextRequest) {
     try {
         const db = createDataStaxClient();
         const {
             meetingId,
-            goal,
+            title,
             ideas,
         } = await req.json();
-        const table = await db.createCollection(`meeting ${meetingId}`)
-        table.insertOne({
-            goal,
-            ideas,
-        });
+        const collection = await db.createCollection<Idea>(`meeting ${meetingId}`, {
+            vector: {
+                service: {
+                    provider: 'nvidia',
+                    modelName: "NV-Embed-QA",
+                }
+            }
+        })
+
+        collection.insertMany(ideas.map((idea: Idea) => ({
+            ...idea,
+            title,
+            $vectorize: `idea: ${idea} | risk_level: ${idea.risk_level}`
+        })));
         return new Response('Success', { status: 200 });
 
     } catch (error) {
