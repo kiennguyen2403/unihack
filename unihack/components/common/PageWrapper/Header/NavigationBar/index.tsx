@@ -14,7 +14,6 @@ const NavigationBar = () => {
     <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
       <div className="px-8 w-full flex gap-5 items-center justify-between font-semibold">
         <Link href={"/"}>Thubble.</Link>
-
         <div className="flex items-center gap-4">
           <ThemeSwitcher />
           <SignedOut>
