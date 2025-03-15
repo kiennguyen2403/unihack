@@ -14,31 +14,43 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import {
-  getRoomDetails,
-  patchGoal,
-  updateGoal,
-} from "@/store/slices/roomSlice";
+import { getRoomDetails, patchGoal } from "@/store/slices/roomSlice";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { Input } from "@/components/ui/input";
 import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { getDataFromLocalStorage } from "@/store/slices/userSlice";
 
 const RoomPage = () => {
   const { roomDetails } = useAppSelector((state) => state.room);
   const user = useAppSelector((state) => state.auth.user);
+  const { role, roomId: userRoomId } = useAppSelector((state) => state.user);
   const dispatch = useAppDispatch();
   const [editableGoal, setEditableGoal] = useState(roomDetails?.goal || "");
   const [isEditing, setIsEditing] = useState(false);
+  const [isHost, setIsHost] = useState(false);
   const channel = useRef<RealtimeChannel | null>(null);
-
   const roomId = useParams().id as string;
+  const router = useRouter();
 
   useEffect(() => {
     if (roomId) {
       dispatch(getRoomDetails(Number(roomId)));
     }
   }, [roomId]);
+
+  useEffect(() => {
+    dispatch(getDataFromLocalStorage());
+  }, []);
+
+  useEffect(() => {
+    if (role === "host") {
+      if (userRoomId == roomId) {
+        setIsHost(true);
+      }
+    }
+  }, [userRoomId, roomId]);
 
   const handleEditGoal = () => {
     setIsEditing(true);
@@ -52,6 +64,10 @@ const RoomPage = () => {
       );
     }
     setIsEditing(false);
+  };
+
+  const handleStartSession = () => {
+    router.push(`/room/${roomId}/session`);
   };
 
   useEffect(() => {
@@ -98,7 +114,7 @@ const RoomPage = () => {
           <div>
             <div className="flex justify-between items-center">
               <Label className="text-lg">Goal</Label>
-              {!isEditing && (
+              {!isEditing && isHost && (
                 <Button onClick={handleEditGoal} variant="ghost" size="sm">
                   Edit
                 </Button>
@@ -125,13 +141,17 @@ const RoomPage = () => {
             <Label className="text-lg">Members</Label>
             <div className="flex flex-wrap gap-2 mt-4">
               <Badge variant="secondary" className="text-sm py-2 px-4">
-                {user?.email || "You"} (You)
+                {user?.email || "You"} ({role})
               </Badge>
             </div>
           </div>
 
-          <Button asChild className="w-full">
-            <Link href={`/room/${roomId}/session`}>Start Session</Link>
+          <Button
+            className="w-full"
+            disabled={!isHost}
+            onClick={handleStartSession}
+          >
+            {isHost ? "Start Session" : "Waiting for host to start..."}
           </Button>
         </CardContent>
       </Card>

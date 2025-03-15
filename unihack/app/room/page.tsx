@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { createRoom } from "@/store/slices/roomSlice";
+import { updateHostData, updateMemberData } from "@/store/slices/userSlice";
 
 const CreateRoomPage = () => {
   const [goal, setGoal] = useState("");
@@ -24,18 +25,19 @@ const CreateRoomPage = () => {
   const createdRoomId = useAppSelector((state) => state.room.createdRoomId);
 
   const handleCreateRoom = () => {
-    // TODO: dispatch a boolean to indicate master of the room
     if (!goal.trim()) return;
     dispatch(createRoom(goal));
   };
 
   const handleJoinRoom = () => {
     if (!roomId.trim()) return;
+    dispatch(updateMemberData(roomId));
     router.push(`/room/${roomId}`);
   };
 
   useEffect(() => {
     if (createdRoomId) {
+      dispatch(updateHostData(createdRoomId));
       router.push(`/room/${createdRoomId}`);
     }
   }, [createdRoomId]);

@@ -37,17 +37,25 @@ const userSlice = createSlice({
     clearRoomId: (state) => {
       state.roomId = null;
     },
-    createRoom: (state, action: PayloadAction<string>) => {
+    updateHostData: (state, action: PayloadAction<string>) => {
       state.role = "host";
       state.roomId = action.payload;
       localStorage.setItem(THUBBLE_ROLE_KEY, "host");
       localStorage.setItem(THUBBLE_ROOM_ID_KEY, action.payload);
     },
-    joinRoom: (state, action: PayloadAction<string>) => {
+    updateMemberData: (state, action: PayloadAction<string>) => {
       state.role = "member";
       state.roomId = action.payload;
       localStorage.setItem(THUBBLE_ROLE_KEY, "member");
       localStorage.setItem(THUBBLE_ROOM_ID_KEY, action.payload);
+    },
+    getDataFromLocalStorage: (state) => {
+      const role = localStorage.getItem(THUBBLE_ROLE_KEY);
+      const roomId = localStorage.getItem(THUBBLE_ROOM_ID_KEY);
+      if (role && roomId) {
+        state.role = role as "member" | "host";
+        state.roomId = roomId;
+      }
     },
   },
 });
@@ -59,7 +67,8 @@ export const {
   clearRole,
   setRoomId,
   clearRoomId,
-  createRoom,
-  joinRoom,
+  updateHostData,
+  updateMemberData,
+  getDataFromLocalStorage,
 } = userSlice.actions;
 export default userSlice.reducer;
