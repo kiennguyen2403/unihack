@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useAppSelector } from "@/store";
+import { useAppSelector, useAppDispatch } from "@/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,14 +15,18 @@ import Countdown from "@/components/common/Coutdown";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { TypingBubble } from "@/components/common/TypingBubble";
-import { IdeaBubble } from "@/utils/types";
+import { Idea } from "@/utils/types";
 import IdeaBall from "@/components/common/IdeaBall";
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import {
+  endSessionAndGetResult,
+  getRoomDetails,
+} from "@/store/slices/roomSlice";
 
 const SessionPage = () => {
-  const [ideas, setIdeas] = useState<IdeaBubble[]>([]);
-  const { roomId, goal } = useAppSelector((state) => state.room);
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const { roomDetails, result } = useAppSelector((state) => state.room);
   const { role } = useAppSelector((state) => state.user);
   const [currentIdea, setCurrentIdea] = useState("");
 
@@ -35,6 +39,7 @@ const SessionPage = () => {
   const userId = user?.id;
 
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +53,16 @@ const SessionPage = () => {
       setCurrentIdea("");
     }
   };
+
+  // todo: get room id from url
+  const params = useParams();
+  const roomId = typeof params.id === "string" ? parseInt(params.id) : null;
+
+  useEffect(() => {
+    if (roomId) {
+      dispatch(getRoomDetails(roomId));
+    }
+  }, [roomId]);
 
   useEffect(() => {
     const client = createClient();
@@ -101,8 +116,20 @@ const SessionPage = () => {
     });
     setIsEnded(true);
     // TODO: add a loading state for generating AI analysis and then redirect
-    router.push(`/room/${roomId}/results`);
+    dispatch(
+      endSessionAndGetResult({
+        roomId: Number(roomId),
+        ideas: ideas.map((idea) => idea.idea),
+        goal: roomDetails?.goal || "",
+      })
+    );
   };
+
+  useEffect(() => {
+    if (result) {
+      router.push(`/room/${roomId}/results`);
+    }
+  }, [result]);
 
   return (
     <div className="w-full flex justify-center items-center min-h-[80vh]">
@@ -112,7 +139,7 @@ const SessionPage = () => {
             Brainstorming Session
           </CardDescription>
           <CardTitle className="text-2xl text-center">
-            {goal || "No goal set"}
+            {roomDetails?.goal || "No goal set"}
           </CardTitle>
           <div className="flex justify-center items-center gap-4">
             <Countdown onEnd={() => setIsTimesUp(true)} />

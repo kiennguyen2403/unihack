@@ -14,7 +14,7 @@ export interface Meeting {
   created_at: string;
 }
 
-export interface IdeaBubble {
+export interface Idea {
   idea: string;
   userId: string;
 }
