@@ -19,7 +19,11 @@ export async function GET(
             sort: { $vectorize: question },
             limit: 3,
         });
-        return new Response(JSON.stringify(ideas), { status: 200 });
+        const results = [];
+        for await (const idea of ideas) {
+            results.push(idea);
+        }
+        return new Response(JSON.stringify(results), { status: 200 });
     } catch (error) {
         console.error(error);
         return new Response('Error', { status: 500 });
