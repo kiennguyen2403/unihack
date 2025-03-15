@@ -13,12 +13,18 @@ export async function GET(
         const { id } = await params;
         const { searchParams } = new URL(req.url);
         const question = searchParams.get('question');
+        if (!question) {
+            return new Response('Bad Request: question parameter is required', { status: 400 });
+        }
         const db = createDataStaxClient();
         const collection = db.collection(`meeting${id}`);
-        const ideas = collection.find({
-            sort: { $vectorize: question },
-            limit: 3,
-        });
+        const ideas = collection.find(
+            {},
+            {
+                sort: { $vectorize: question },
+                limit: 3,
+            }
+        );
         const results = [];
         for await (const idea of ideas) {
             results.push(idea);

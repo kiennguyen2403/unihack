@@ -4,20 +4,16 @@ import { NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
     try {
-        const { userId, getToken } = await auth();
+        const { userId, getToken } = getAuth(request);
         if (!userId) {
             return new Response('Unauthorized', { status: 401 });
         }
-        const { idea, meetingId } = await request.json();
+        const { ideas } = await request.json();
 
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('ideas')
-            .insert({
-                idea,
-                user_id: userId,
-                meeting_id: meetingId
-            });
+            .insert(ideas);
         if (error) {
             throw error;
         }

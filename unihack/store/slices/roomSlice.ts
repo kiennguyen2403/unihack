@@ -245,20 +245,20 @@ export const endSessionAndGetResult = createAsyncThunk(
 
       // Save ideas and summary concurrently with Promise.all
       const [ideasResponse, summaryResponse] = await Promise.all([
-        fetch(`/api/v1/ideas/meetings`, {
+        fetch(`/api/v1/ideas`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            meetingId: roomId,
             ideas: aiData.results.map((result: any) => ({
+              meeting_id: roomId,
               title: result.title,
               explanation: result.explanation,
             })),
           }),
         }),
-        fetch(`/api/v1/summarize/meetings`, {
+        fetch(`/api/v1/summarize`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -286,7 +286,6 @@ export const endSessionAndGetResult = createAsyncThunk(
       return { aiData, ideasData, summaryData }; // Return data for potential use in fulfilled case
     } catch (error: any) {
       console.error("Error in endSessionAndGetResult:", error);
-      throw error;
       return rejectWithValue(error.message);
     } finally {
       dispatch(setLoadingResult(false));
