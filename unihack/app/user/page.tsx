@@ -1,8 +1,10 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Brain, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 
-export default function Home() {
+export default function UserDashboard() {
   return (
     <div className="flex flex-col gap-8 items-center max-w-5xl mx-auto px-4 py-16">
       <h1 className="text-5xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">

@@ -12,7 +12,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // Redirect authenticated users from root (/) to /user
   if (userId && req.nextUrl.pathname === "/") {
-    const homeUrl = new URL("/home", req.url);
+    const homeUrl = new URL("/user", req.url);
     return NextResponse.redirect(homeUrl);
   }
 
