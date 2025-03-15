@@ -68,7 +68,7 @@ const roomSlice = createSlice({
 
 export const createRoom = createAsyncThunk(
   "room/createRoom",
-  async (goal: string, { dispatch }) => {
+  async ({ goal, user_id }: { goal: string; user_id: string }, { dispatch }) => {
     const supabase = createClient();
     try {
       dispatch(setCreatedRoomId(null));
@@ -80,11 +80,21 @@ export const createRoom = createAsyncThunk(
           },
         ])
         .select();
-
       if (error) throw error;
-
       dispatch(setCreatedRoomId(data[0].id));
       dispatch(updateGoal(goal));
+
+      const { error: EventError } = await supabase
+        .from("events")
+        .insert({
+          user_id: user_id,
+          meeting_id: data[0].id,
+          role: "HOST",
+          status: "JOIN"
+        })
+
+      if (EventError) throw EventError;
+
       return data[0].id;
     } catch (error) {
       console.error("Error creating room:", error);

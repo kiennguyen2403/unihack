@@ -17,11 +17,14 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { createRoom } from "@/store/slices/roomSlice";
 import {
   clearUserData,
+  joinRoom,
   updateHostData,
   updateMemberData,
 } from "@/store/slices/userSlice";
+import { useUser } from "@clerk/nextjs";
 
 const CreateRoomPage = () => {
+  const { isSignedIn, user, isLoaded } = useUser();
   const [goal, setGoal] = useState("");
   const [roomId, setRoomId] = useState("");
   const router = useRouter();
@@ -29,12 +32,13 @@ const CreateRoomPage = () => {
   const createdRoomId = useAppSelector((state) => state.room.createdRoomId);
 
   const handleCreateRoom = () => {
-    if (!goal.trim()) return;
-    dispatch(createRoom(goal));
+    if (!goal.trim() || !user?.id) return;
+    dispatch(createRoom({ goal, user_id: user?.id }));
   };
 
   const handleJoinRoom = () => {
-    if (!roomId.trim()) return;
+    if (!roomId.trim() || !user?.id) return;
+    dispatch(joinRoom({ meeting_id: roomId, user_id: user?.id }));
     dispatch(updateMemberData(roomId));
     router.push(`/room/${roomId}`);
   };
