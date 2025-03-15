@@ -3,6 +3,7 @@ import { ThemeProvider } from "next-themes";
 
 import "./globals.css";
 import PageWrapper from "@/components/common/PageWrapper";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -27,15 +28,20 @@ export default function RootLayout({
   return (
     <html lang="en" className={geistSans.className} suppressHydrationWarning>
       <body className="bg-background text-foreground">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
+        <ClerkProvider
+          touchSession={false}
+          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
         >
-          {/* {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />} */}
-          <PageWrapper>{children}</PageWrapper>
-        </ThemeProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {/* {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />} */}
+            <PageWrapper>{children}</PageWrapper>
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
