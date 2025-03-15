@@ -65,19 +65,21 @@ const roomSlice = createSlice({
 export const createRoom = createAsyncThunk(
   "room/createRoom",
   async (goal: string, { dispatch }) => {
-    const supabase = createClient();
     try {
       dispatch(setCreatedRoomId(null));
-      const { data, error } = await supabase
-        .from("meetings")
-        .insert([
-          {
-            goal: goal,
-          },
-        ])
-        .select();
-
-      if (error) throw error;
+      const response = await fetch("/api/v1/meetings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ goal }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to create room");
+      }
+      
+      const data = await response.json();
 
       dispatch(setCreatedRoomId(data[0].id));
       dispatch(updateGoal(goal));
