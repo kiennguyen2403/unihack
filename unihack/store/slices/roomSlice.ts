@@ -85,7 +85,7 @@ export const createRoom = createAsyncThunk(
       }
       
       const data = await response.json();
-      console.log("Created room:", data);
+      console.debug("Created room:", data);
 
       dispatch(setCreatedRoomId(data.id));
       dispatch(updateGoal(goal));

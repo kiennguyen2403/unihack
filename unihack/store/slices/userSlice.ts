@@ -1,7 +1,8 @@
 // won't be used for  when auth is ready!
 
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { THUBBLE_ROLE_KEY, THUBBLE_ROOM_ID_KEY } from "../../utils/constant";
+import { createClient } from "@/utils/supabase/client";
 
 interface UserState {
   name: string | null;
@@ -59,6 +60,32 @@ const userSlice = createSlice({
     },
   },
 });
+
+
+export const joinRoom = createAsyncThunk(
+  "room/joinRoom",
+  async ({ meeting_id, user_id }: { meeting_id: string; user_id: string }, { dispatch }) => {
+    const supabase = createClient();
+    try {
+
+      const { error: EventError } = await supabase
+        .from("events")
+        .insert({
+          user_id: user_id,
+          meeting_id: meeting_id,
+          role: "ATTEND",
+          status: "JOIN"
+        })
+
+      dispatch(updateMemberData(meeting_id));
+
+      if (EventError) throw EventError;
+    } catch (error) {
+      console.error("Error creating room:", error);
+      throw error;
+    }
+  }
+);
 
 export const {
   setName,

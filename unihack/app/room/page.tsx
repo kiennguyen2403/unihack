@@ -15,9 +15,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { createRoom } from "@/store/slices/roomSlice";
-import { updateHostData, updateMemberData } from "@/store/slices/userSlice";
+import {
+  joinRoom,
+  updateHostData,
+  updateMemberData,
+} from "@/store/slices/userSlice";
+import { currentUser } from "@clerk/nextjs/server";
+import { useUser } from "@clerk/nextjs";
+import { join } from "path";
 
 const CreateRoomPage = () => {
+  const { isSignedIn, user, isLoaded } = useUser();
   const [goal, setGoal] = useState("");
   const [roomId, setRoomId] = useState("");
   const router = useRouter();
@@ -25,13 +33,13 @@ const CreateRoomPage = () => {
   const createdRoomId = useAppSelector((state) => state.room.createdRoomId);
 
   const handleCreateRoom = () => {
-    if (!goal.trim()) return;
-    dispatch(createRoom(goal));
+    if (!goal.trim() || !user?.id) return;
+    dispatch(createRoom({ goal, user_id: user?.id }));
   };
 
   const handleJoinRoom = () => {
-    if (!roomId.trim()) return;
-    dispatch(updateMemberData(roomId));
+    if (!roomId.trim() || !user?.id) return;
+    dispatch(joinRoom({ meeting_id: roomId, user_id: user?.id }));
     router.push(`/room/${roomId}`);
   };
 
