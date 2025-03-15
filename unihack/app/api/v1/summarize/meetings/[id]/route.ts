@@ -14,9 +14,10 @@ export async function GET(
         const { searchParams } = new URL(req.url);
         const question = searchParams.get('question');
         const db = createDataStaxClient();
-        const table = db.collection(`meetings ${id}`);
-        
+        const collection = db.collection(`meetings ${id}`);
+        const ideas = collection.find({ value: { $search: question } });
+        return new Response(JSON.stringify(ideas), { status: 200 });
     } catch (error) {
-        console.error(error);
+        return new Response('Error', { status: 500 });
     }
 }
