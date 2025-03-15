@@ -41,7 +41,7 @@ Follow this format for the response:
   "results": [
     { 
       "title": "[Short, descriptive title of the idea]", 
-      "explanation": "[Brief summary]. Pro: [Advantage]. Con: [Disadvantage]. [If multiple users suggested this idea, mention it at the end: 'This idea was proposed by multiple users.']" 
+      "explanation": "[Brief summary]. Pro: [Advantage]. Con: [Disadvantage]. [If multiple users suggested this idea, mention it at the end: 'This idea was proposed by multiple users.']"
     }
   ],
   "metadata": { "additionalInfo": "[General insights on the overall ideas]" }
