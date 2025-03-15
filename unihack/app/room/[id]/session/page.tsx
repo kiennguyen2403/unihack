@@ -11,7 +11,7 @@ import {
   CardContent,
   CardDescription,
 } from "@/components/ui/card";
-import Countdown from "@/components/common/Coutdown";
+import Countdown from "@/components/common/Coutdown"; // Typo: should be "Countdown"
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { TypingBubble } from "@/components/common/TypingBubble";
@@ -29,7 +29,6 @@ const SessionPage = () => {
   const { roomDetails, result } = useAppSelector((state) => state.room);
   const { role } = useAppSelector((state) => state.user);
   const [currentIdea, setCurrentIdea] = useState("");
-
   const [isEnded, setIsEnded] = useState(false);
   const [isTimesUp, setIsTimesUp] = useState(false);
   const channel = useRef<RealtimeChannel | null>(null);
@@ -60,7 +59,7 @@ const SessionPage = () => {
         payload: newIdea,
       });
 
-      setCurrentIdea("");
+      setCurrentIdea(""); // This will trigger handleIdeaChange to send END_TYPING
     }
   };
 
@@ -70,7 +69,6 @@ const SessionPage = () => {
       event: "END_SESSION",
     });
     setIsEnded(true);
-    // TODO: add a loading state for generating AI analysis and then redirect
     dispatch(
       endSessionAndGetResult({
         roomId: Number(roomId),
@@ -80,65 +78,81 @@ const SessionPage = () => {
     );
   };
 
+  const handleIdeaChange = (value: string) => {
+    if (value.trim()) {
+      channel.current?.send({
+        type: "broadcast",
+        event: "TYPING_IDEA",
+        payload: { idea: value },
+      });
+    } else {
+      channel.current?.send({
+        type: "broadcast",
+        event: "END_TYPING",
+        payload: {},
+      });
+    }
+    setCurrentIdea(value);
+  };
+
   useEffect(() => {
     if (result && isEnded) {
       router.push(`/room/${roomId}/results`);
     }
-  }, [result, isEnded]);
+  }, [result, isEnded, roomId, router]);
 
   useEffect(() => {
     if (roomId) {
       dispatch(getRoomDetails(roomId));
     }
-  }, [roomId]);
+  }, [roomId, dispatch]);
 
   useEffect(() => {
     const client = createClient();
     channel.current = client.channel(`room:${roomId}`, {
       config: {
         broadcast: {
-          self: true, // This ensures the sender also receives their own messages
-          ack: true, // Request acknowledgment
+          self: true,
+          ack: true,
         },
       },
     });
 
-    // Handle ADD_IDEA event
     channel.current.on("broadcast", { event: "ADD_IDEA" }, ({ payload }) => {
       setIdeas((prevIdeas) => {
         if (!prevIdeas.some((idea) => idea.idea === payload.idea)) {
-          return [...prevIdeas, payload]; // Now payload includes a color
+          return [...prevIdeas, payload];
         }
         return prevIdeas;
       });
     });
 
-    // Handle END_SESSION event
     channel.current.on("broadcast", { event: "END_SESSION" }, () => {
       setIsEnded(true);
       router.push(`/room/${roomId}/result`);
     });
 
-    // Handle TYPING_IDEA event (optional: could show who's typing)
     channel.current.on("broadcast", { event: "TYPING_IDEA" }, ({ payload }) => {
       setSomeoneIsTyping(!!payload.idea.trim());
     });
 
-    // Subscribe to the channel
+    channel.current.on("broadcast", { event: "END_TYPING" }, () => {
+      setSomeoneIsTyping(false);
+    });
+
     channel.current.subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
         console.log("Successfully subscribed to channel");
       }
     });
 
-    // Cleanup
     return () => {
       if (channel.current) {
         channel.current.unsubscribe();
         channel.current = null;
       }
     };
-  }, [roomId]); // Add roomId as dependency since it's used in the channel name
+  }, [roomId]);
 
   return (
     <div className="w-full flex justify-center items-center min-h-[80vh]">
@@ -175,14 +189,7 @@ const SessionPage = () => {
               <Input
                 disabled={isEnded}
                 value={currentIdea}
-                onChange={(e) => {
-                  channel.current?.send({
-                    type: "broadcast",
-                    event: "TYPING_IDEA",
-                    payload: { idea: e.target.value },
-                  });
-                  setCurrentIdea(e.target.value);
-                }}
+                onChange={(e) => handleIdeaChange(e.target.value)}
                 placeholder="Share your idea..."
               />
               <Button type="submit" disabled={isEnded}>
