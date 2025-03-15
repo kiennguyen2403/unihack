@@ -1,5 +1,4 @@
 import { createDataStaxClient, Idea } from "@/utils/datastax";
-import { vector } from "@datastax/astra-db-ts";
 import { NextRequest } from "next/server";
 
 
@@ -11,7 +10,7 @@ export async function POST(req: NextRequest) {
             title,
             ideas,
         } = await req.json();
-        const collection = await db.createCollection<Idea>(`meeting ${meetingId}`, {
+        const collection = await db.createCollection<Idea>(`meeting${meetingId}`, {
             vector: {
                 service: {
                     provider: 'nvidia',
@@ -20,7 +19,7 @@ export async function POST(req: NextRequest) {
             }
         })
 
-        collection.insertMany(ideas.map((idea: Idea) => ({
+        await collection.insertMany(ideas.map((idea: Idea) => ({
             ...idea,
             title,
             $vectorize: `idea: ${idea} | risk_level: ${idea.risk_level}`

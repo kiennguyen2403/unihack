@@ -198,11 +198,12 @@ export const endSessionAndGetResult = createAsyncThunk(
   "room/endSessionAndAnalyze",
   async (
     { roomId, ideas, goal }: { roomId: number; ideas: string[]; goal: string },
-    { dispatch }
+    { dispatch, rejectWithValue }
   ) => {
     try {
       dispatch(setLoadingResult(true));
-      // First, call the AI feedback endpoint
+
+      // Call AI feedback endpoint
       const aiResponse = await fetch("/api/v1/ai/get-feedback", {
         method: "POST",
         headers: {
@@ -214,30 +215,78 @@ export const endSessionAndGetResult = createAsyncThunk(
         }),
       });
       if (!aiResponse.ok) {
-        throw new Error("Failed to get AI feedback");
+        throw new Error(`AI feedback request failed: ${aiResponse.statusText}`);
       }
-      const aiData = await aiResponse.json();
-      console.log("aiData", aiData);
 
-      // Set the results in the store
+      const aiData = await aiResponse.json();
+
+      // Ensure aiData has the expected shape
+      if (!aiData.results || !aiData.metadata) {
+        throw new Error("Invalid AI response format");
+      }
+
+      // Set AI results in the store
       dispatch(
         setResult({
           result: aiData.results,
           metadata: aiData.metadata,
         })
       );
-      const supabase = createClient();
-      const { data, error } = await supabase.from("ideas").insert(
-        aiData.results.map((result: BrainstormResult) => ({
-          meeting_id: roomId,
-          title: result.title,
-          explanation: result.explanation,
-        }))
-      );
-      if (error) throw error;
-    } catch (error) {
+
+      // const supabase = createClient();
+      // const { data, error } = await supabase.from("ideas").insert(
+      //   aiData.results.map((result: BrainstormResult) => ({
+      //     meeting_id: roomId,
+      //     title: result.title,
+      //     explanation: result.explanation,
+      //   }))
+      // );
+      // if (error) throw error;
+
+      // Save ideas and summary concurrently with Promise.all
+      const [ideasResponse, summaryResponse] = await Promise.all([
+        fetch(`/api/v1/ideas`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ideas: aiData.results.map((result: any) => ({
+              meeting_id: roomId,
+              title: result.title,
+              explanation: result.explanation,
+            })),
+          }),
+        }),
+        fetch(`/api/v1/summarize`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            meetingId: roomId,
+            title: goal,
+            ideas: ideas,
+          }),
+        }),
+      ]);
+
+      // Check responses
+      if (!ideasResponse.ok) {
+        throw new Error(`Ideas API failed: ${ideasResponse.statusText}`);
+      }
+      if (!summaryResponse.ok) {
+        throw new Error(`Summary API failed: ${summaryResponse.statusText}`);
+      }
+
+      // Optionally parse responses if you need the data
+      const ideasData = await ideasResponse.json();
+      const summaryData = await summaryResponse.json();
+
+      return { aiData, ideasData, summaryData }; // Return data for potential use in fulfilled case
+    } catch (error: any) {
       console.error("Error in endSessionAndGetResult:", error);
-      throw error;
+      return rejectWithValue(error.message);
     } finally {
       dispatch(setLoadingResult(false));
     }
