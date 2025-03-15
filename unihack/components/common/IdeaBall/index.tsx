@@ -14,10 +14,7 @@ const IdeaBall = ({ idea, userId, color }: IdeaBallProps) => {
     <div
       className="w-[200px] h-[200px] rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:shadow-md transition-shadow p-4 relative overflow-hidden"
       style={{
-        position: "relative",
-        backgroundColor:
-          color ||
-          IDEA_BALL_COLORS[Math.floor(Math.random() * IDEA_BALL_COLORS.length)],
+        backgroundColor: color, // Now uses the pre-assigned color
       }}
     >
       <div
@@ -26,7 +23,7 @@ const IdeaBall = ({ idea, userId, color }: IdeaBallProps) => {
           transform: `rotate(${Math.floor(Math.random() * 360)}deg)`,
         }}
       />
-      <span className="relative z-10 text-center w-full truncate">
+      <span className="relative z-10 text-center w-full truncate text-black">
         {userId === currentUserId ? idea : "A brilliant idea!"}
       </span>
     </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 
 const Countdown = ({ onEnd }: { onEnd: () => void }) => {
-  const [timeLeft, setTimeLeft] = useState(5 * 1000); // 30 seconds in milliseconds
+  const [timeLeft, setTimeLeft] = useState(120 * 1000); // 2 minutes in milliseconds
   const timerRef = useRef<NodeJS.Timeout | null>(null); // Store interval reference
   const hasEndedRef = useRef(false);
 
@@ -34,9 +34,9 @@ const Countdown = ({ onEnd }: { onEnd: () => void }) => {
   return (
     <div
       className={`text-4xl font-bold transition-colors duration-300 p-2 ${
-        timeLeft <= 120 * 1000 // 2 MINUTES
+        timeLeft <= 60 * 1000 // 2 MINUTES
           ? "text-red-500"
-          : timeLeft <= 10 * 1000
+          : timeLeft <= 90 * 1000
             ? "text-orange-500"
             : "text-foreground"
       }`}

@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 import { getDataFromLocalStorage } from "@/store/slices/userSlice";
 
 const RoomPage = () => {
-  const { roomDetails } = useAppSelector((state) => state.room);
+  const { roomDetails, loading } = useAppSelector((state) => state.room);
   const user = useAppSelector((state) => state.auth.user);
   const { role, roomId: userRoomId } = useAppSelector((state) => state.user);
   const dispatch = useAppDispatch();
@@ -147,11 +147,11 @@ const RoomPage = () => {
           </div>
 
           <Button
-            className="w-full"
-            disabled={!isHost}
+            className={`w-full ${!isHost || loading ? "bg-gray-300 text-gray-500" : ""}`}
+            disabled={!isHost || loading}
             onClick={handleStartSession}
           >
-            {isHost ? "Start Session" : "Waiting for host to start..."}
+            {isHost ? "Start Thubbling" : "Waiting for host to start..."}
           </Button>
         </CardContent>
       </Card>

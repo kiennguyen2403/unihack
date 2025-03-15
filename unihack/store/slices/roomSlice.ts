@@ -6,6 +6,7 @@ import {
   Idea,
   Meeting,
 } from "@/utils/types";
+import { setLoading } from "./authSlice";
 
 interface RoomState {
   roomId: string | null;
@@ -16,6 +17,7 @@ interface RoomState {
   loadingResult: boolean;
   createdRoomId: string | null;
   roomDetails: Meeting | null;
+  loading: boolean;
 }
 
 interface AIResultRequest {
@@ -32,6 +34,7 @@ const initialState: RoomState = {
   loadingResult: false,
   createdRoomId: null,
   roomDetails: null,
+  loading: false,
 };
 
 const roomSlice = createSlice({
@@ -68,6 +71,9 @@ const roomSlice = createSlice({
     setRoomDetails: (state, action: PayloadAction<Meeting>) => {
       state.roomDetails = action.payload;
     },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
   },
 });
 
@@ -75,6 +81,7 @@ export const createRoom = createAsyncThunk(
   "room/createRoom",
   async (goal: string, { dispatch }) => {
     try {
+      dispatch(setLoading(true));
       dispatch(setCreatedRoomId(null));
       const response = await fetch("/api/v1/meetings", {
         method: "POST",
@@ -93,6 +100,8 @@ export const createRoom = createAsyncThunk(
     } catch (error) {
       console.error("Error creating room:", error);
       throw error;
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
@@ -125,6 +134,7 @@ export const patchGoal = createAsyncThunk(
     { dispatch }
   ) => {
     try {
+      dispatch(setLoading(true));
       const response = await fetch(`/api/v1/meetings/${meetingId}`, {
         method: "PATCH", // Using your PATCH endpoint
         headers: {
@@ -147,6 +157,8 @@ export const patchGoal = createAsyncThunk(
     } catch (error) {
       console.error("Error updating goal:", error);
       throw error;
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
@@ -176,6 +188,8 @@ export const getRoomDetails = createAsyncThunk(
     } catch (error) {
       console.error("Error getting room details:", error);
       throw error;
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
@@ -199,13 +213,10 @@ export const endSessionAndGetResult = createAsyncThunk(
           ideas: ideas,
         }),
       });
-
       if (!aiResponse.ok) {
         throw new Error("Failed to get AI feedback");
       }
-
       const aiData = await aiResponse.json();
-
       console.log("aiData", aiData);
 
       // Set the results in the store
@@ -215,10 +226,7 @@ export const endSessionAndGetResult = createAsyncThunk(
           metadata: aiData.metadata,
         })
       );
-
       const supabase = createClient();
-
-      // Insert all results as separate rows
       const { data, error } = await supabase.from("ideas").insert(
         aiData.results.map((result: BrainstormResult) => ({
           meeting_id: roomId,
@@ -226,10 +234,7 @@ export const endSessionAndGetResult = createAsyncThunk(
           explanation: result.explanation,
         }))
       );
-
       if (error) throw error;
-
-      return aiData;
     } catch (error) {
       console.error("Error in endSessionAndGetResult:", error);
       throw error;

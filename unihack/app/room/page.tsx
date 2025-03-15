@@ -29,7 +29,7 @@ const CreateRoomPage = () => {
   const [roomId, setRoomId] = useState("");
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const createdRoomId = useAppSelector((state) => state.room.createdRoomId);
+  const { createdRoomId, loading } = useAppSelector((state) => state.room);
 
   const handleCreateRoom = () => {
     if (!goal.trim() || !user?.id) return;
@@ -79,8 +79,12 @@ const CreateRoomPage = () => {
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
                 />
-                <Button className="w-full" onClick={handleCreateRoom}>
-                  Create Room
+                <Button
+                  className={`w-full ${loading ? "bg-gray-300 text-gray-500" : ""}`}
+                  onClick={handleCreateRoom}
+                  disabled={loading}
+                >
+                  {loading ? "Creating Room..." : "Create Room"}
                 </Button>
               </div>
             </TabsContent>
@@ -92,8 +96,12 @@ const CreateRoomPage = () => {
                   value={roomId}
                   onChange={(e) => setRoomId(e.target.value)}
                 />
-                <Button className="w-full" onClick={handleJoinRoom}>
-                  Join Room
+                <Button
+                  className={`w-full ${loading ? "bg-gray-300 text-gray-500" : ""}`}
+                  onClick={handleJoinRoom}
+                  disabled={loading}
+                >
+                  {loading ? "Joining Room..." : "Join Room"}
                 </Button>
               </div>
             </TabsContent>

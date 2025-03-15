@@ -16,7 +16,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { TypingBubble } from "@/components/common/TypingBubble";
 import { Idea } from "@/utils/types";
-import IdeaBall from "@/components/common/IdeaBall";
+import IdeaBall, { IDEA_BALL_COLORS } from "@/components/common/IdeaBall";
 import { useUser } from "@clerk/nextjs";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -47,12 +47,19 @@ const SessionPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (currentIdea.trim()) {
-      const newIdea = currentIdea.trim();
+      const newIdea = {
+        idea: currentIdea.trim(),
+        userId: userId,
+        color:
+          IDEA_BALL_COLORS[Math.floor(Math.random() * IDEA_BALL_COLORS.length)],
+      };
+
       channel.current?.send({
         type: "broadcast",
         event: "ADD_IDEA",
-        payload: { idea: newIdea, userId: userId },
+        payload: newIdea,
       });
+
       setCurrentIdea("");
     }
   };
@@ -98,10 +105,9 @@ const SessionPage = () => {
 
     // Handle ADD_IDEA event
     channel.current.on("broadcast", { event: "ADD_IDEA" }, ({ payload }) => {
-      console.log("Received new idea:", payload.idea);
       setIdeas((prevIdeas) => {
         if (!prevIdeas.some((idea) => idea.idea === payload.idea)) {
-          return [...prevIdeas, { idea: payload.idea, userId: payload.userId }];
+          return [...prevIdeas, payload]; // Now payload includes a color
         }
         return prevIdeas;
       });
