@@ -39,6 +39,7 @@ const CreateRoomPage = () => {
     if (createdRoomId) {
       dispatch(updateHostData(createdRoomId));
       router.push(`/room/${createdRoomId}`);
+      // TODO: call the event to set host here
     }
   }, [createdRoomId]);
 
