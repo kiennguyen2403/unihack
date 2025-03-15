@@ -3,13 +3,14 @@ import { createClient } from "@/utils/supabase/client";
 import {
   BrainstormResult,
   BrainstormResultMetadata,
+  Idea,
   Meeting,
 } from "@/utils/types";
 
 interface RoomState {
   roomId: string | null;
   goal: string | null;
-  ideas: string[];
+  ideas: Idea[];
   result: BrainstormResult[] | null; // the analysis of the ideas from AI
   resultMetadata: BrainstormResultMetadata | null;
   loadingResult: boolean;
@@ -45,6 +46,9 @@ const roomSlice = createSlice({
     },
     setLoadingResult: (state, action: PayloadAction<boolean>) => {
       state.loadingResult = action.payload;
+    },
+    setIdeas: (state, action: PayloadAction<Idea[]>) => {
+      state.ideas = action.payload;
     },
     setResult: (
       state,
@@ -96,6 +100,13 @@ export const createRoom = createAsyncThunk(
       console.error("Error creating room:", error);
       throw error;
     }
+  }
+);
+
+export const endRoomSession = createAsyncThunk(
+  "room/endRoomSession",
+  async (roomId: string, { dispatch }) => {
+    const supabase = createClient();
   }
 );
 
@@ -163,6 +174,65 @@ export const getRoomDetails = createAsyncThunk(
     } catch (error) {
       console.error("Error getting room details:", error);
       throw error;
+    }
+  }
+);
+
+export const endSessionAndGetResult = createAsyncThunk(
+  "room/endSessionAndAnalyze",
+  async (
+    { roomId, ideas, goal }: { roomId: number; ideas: string[]; goal: string },
+    { dispatch }
+  ) => {
+    try {
+      dispatch(setLoadingResult(true));
+      // First, call the AI feedback endpoint
+      const aiResponse = await fetch("/api/v1/ai/get-feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topic: goal,
+          ideas: ideas,
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        throw new Error("Failed to get AI feedback");
+      }
+
+      const aiData = await aiResponse.json();
+
+      console.log("aiData", aiData);
+
+      // Set the results in the store
+      dispatch(
+        setResult({
+          result: aiData.results,
+          metadata: aiData.metadata,
+        })
+      );
+
+      const supabase = createClient();
+
+      // Insert all results as separate rows
+      const { data, error } = await supabase.from("ideas").insert(
+        aiData.results.map((result: BrainstormResult) => ({
+          meeting_id: roomId,
+          title: result.title,
+          explanation: result.explanation,
+        }))
+      );
+
+      if (error) throw error;
+
+      return aiData;
+    } catch (error) {
+      console.error("Error in endSessionAndGetResult:", error);
+      throw error;
+    } finally {
+      dispatch(setLoadingResult(false));
     }
   }
 );

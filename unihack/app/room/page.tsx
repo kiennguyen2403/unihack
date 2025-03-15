@@ -16,13 +16,12 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { createRoom } from "@/store/slices/roomSlice";
 import {
+  clearUserData,
   joinRoom,
   updateHostData,
   updateMemberData,
 } from "@/store/slices/userSlice";
-import { currentUser } from "@clerk/nextjs/server";
 import { useUser } from "@clerk/nextjs";
-import { join } from "path";
 
 const CreateRoomPage = () => {
   const { isSignedIn, user, isLoaded } = useUser();
@@ -40,6 +39,7 @@ const CreateRoomPage = () => {
   const handleJoinRoom = () => {
     if (!roomId.trim() || !user?.id) return;
     dispatch(joinRoom({ meeting_id: roomId, user_id: user?.id }));
+    dispatch(updateMemberData(roomId));
     router.push(`/room/${roomId}`);
   };
 
@@ -50,6 +50,10 @@ const CreateRoomPage = () => {
       // TODO: call the event to set host here
     }
   }, [createdRoomId]);
+
+  useEffect(() => {
+    dispatch(clearUserData());
+  }, []);
 
   return (
     <div className="w-[50%] flex justify-center items-center min-h-[80vh]">
