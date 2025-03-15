@@ -1,4 +1,10 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createClient } from "@/utils/supabase/client";
+import {
+  BrainstormResult,
+  BrainstormResultMetadata,
+  Meeting,
+} from "@/utils/types";
 
 interface RoomState {
   roomId: string | null;
@@ -7,6 +13,8 @@ interface RoomState {
   result: BrainstormResult[] | null; // the analysis of the ideas from AI
   resultMetadata: BrainstormResultMetadata | null;
   loadingResult: boolean;
+  createdRoomId: string | null;
+  roomDetails: Meeting | null;
 }
 
 const initialState: RoomState = {
@@ -16,24 +24,21 @@ const initialState: RoomState = {
   result: null,
   resultMetadata: null,
   loadingResult: false,
+  createdRoomId: null,
+  roomDetails: null,
 };
 
 const roomSlice = createSlice({
   name: "room",
   initialState,
   reducers: {
-    createRoom: (
-      state,
-      action: PayloadAction<{ roomId: string; goal: string }>
-    ) => {
-      state.roomId = action.payload.roomId;
-      state.goal = action.payload.goal;
-      state.ideas = [];
-    },
     clearRoom: (state) => {
       state.roomId = null;
       state.goal = null;
       state.ideas = [];
+    },
+    setCreatedRoomId: (state, action: PayloadAction<string | null>) => {
+      state.createdRoomId = action.payload;
     },
     updateGoal: (state, action: PayloadAction<string>) => {
       state.goal = action.payload;
@@ -51,8 +56,38 @@ const roomSlice = createSlice({
       state.result = action.payload.result;
       state.resultMetadata = action.payload.metadata;
     },
+    setRoomDetails: (state, action: PayloadAction<Meeting>) => {
+      state.roomDetails = action.payload;
+    },
   },
 });
+
+export const createRoom = createAsyncThunk(
+  "room/createRoom",
+  async (goal: string, { dispatch }) => {
+    const supabase = createClient();
+    try {
+      dispatch(setCreatedRoomId(null));
+      const { data, error } = await supabase
+        .from("meetings")
+        .insert([
+          {
+            goal: goal,
+          },
+        ])
+        .select();
+
+      if (error) throw error;
+
+      dispatch(setCreatedRoomId(data[0].id));
+      dispatch(updateGoal(goal));
+      return data[0].id;
+    } catch (error) {
+      console.error("Error creating room:", error);
+      throw error;
+    }
+  }
+);
 
 export const fetchResult = createAsyncThunk(
   "room/fetchResult",
@@ -75,11 +110,59 @@ export const fetchResult = createAsyncThunk(
   }
 );
 
+export const patchGoal = createAsyncThunk(
+  "room/patchGoal",
+  async (
+    { goal, meetingId }: { goal: string; meetingId: number },
+    { dispatch }
+  ) => {
+    const supabase = createClient();
+    try {
+      const { data, error } = await supabase
+        .from("meetings")
+        .update({ goal })
+        .eq("id", meetingId)
+        .select(); // Add .select() to return the updated data
+      if (error) throw error;
+
+      dispatch(updateGoal(goal));
+      dispatch(setRoomDetails(data[0]));
+      return data;
+    } catch (error) {
+      console.error("Error updating goal:", error);
+      throw error;
+    }
+  }
+);
+
+export const getRoomDetails = createAsyncThunk(
+  "room/getRoomDetails",
+  async (meetingId: number, { dispatch }) => {
+    const supabase = createClient();
+    try {
+      const { data, error } = await supabase
+        .from("meetings")
+        .select("*")
+        .eq("id", meetingId)
+        .single();
+
+      if (error) throw error;
+      if (!data) throw new Error("Meeting not found");
+      dispatch(setRoomDetails(data));
+      return data;
+    } catch (error) {
+      console.error("Error getting room details:", error);
+      throw error;
+    }
+  }
+);
+
 export const {
-  createRoom,
   clearRoom,
   updateGoal,
   setLoadingResult,
   setResult,
+  setCreatedRoomId,
+  setRoomDetails,
 } = roomSlice.actions;
 export default roomSlice.reducer;

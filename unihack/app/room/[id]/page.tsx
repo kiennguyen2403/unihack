@@ -14,26 +14,42 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { updateGoal } from "@/store/slices/roomSlice";
+import {
+  getRoomDetails,
+  patchGoal,
+  updateGoal,
+} from "@/store/slices/roomSlice";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
+import { Input } from "@/components/ui/input";
+import { useParams } from "next/navigation";
 
 const RoomPage = () => {
-  const { roomId, goal } = useAppSelector((state) => state.room);
+  const { roomDetails } = useAppSelector((state) => state.room);
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
-  const [editableGoal, setEditableGoal] = useState(goal || "");
+  const [editableGoal, setEditableGoal] = useState(roomDetails?.goal || "");
   const [isEditing, setIsEditing] = useState(false);
   const channel = useRef<RealtimeChannel | null>(null);
 
+  const roomId = useParams().id as string;
+
+  useEffect(() => {
+    if (roomId) {
+      dispatch(getRoomDetails(Number(roomId)));
+    }
+  }, [roomId]);
+
   const handleEditGoal = () => {
     setIsEditing(true);
-    setEditableGoal(goal || "");
+    setEditableGoal(roomDetails?.goal || "");
   };
 
   const handleSaveGoal = () => {
     if (editableGoal.trim()) {
-      dispatch(updateGoal(editableGoal.trim()));
+      dispatch(
+        patchGoal({ goal: editableGoal.trim(), meetingId: Number(roomId) })
+      );
     }
     setIsEditing(false);
   };
@@ -90,15 +106,17 @@ const RoomPage = () => {
             </div>
             {isEditing ? (
               <div className="flex gap-2 mt-2">
-                {/* <Input
+                <Input
                   value={editableGoal}
                   onChange={(e) => setEditableGoal(e.target.value)}
-                /> */}
+                />
                 <Button onClick={handleSaveGoal}>Save</Button>
               </div>
             ) : (
               <div className="mt-2 p-4 rounded-lg border">
-                <p className="text-gray-700">{goal || "No goal set"}</p>
+                <p className="text-gray-700">
+                  {roomDetails?.goal || "No goal set"}
+                </p>
               </div>
             )}
           </div>
