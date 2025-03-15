@@ -17,6 +17,11 @@ interface RoomState {
   roomDetails: Meeting | null;
 }
 
+interface AIResultRequest {
+  topic: string;
+  ideas: string[];
+}
+
 const initialState: RoomState = {
   roomId: null,
   goal: null,
@@ -80,8 +85,9 @@ export const createRoom = createAsyncThunk(
       }
       
       const data = await response.json();
+      console.log("Created room:", data);
 
-      dispatch(setCreatedRoomId(data[0].id));
+      dispatch(setCreatedRoomId(data.id));
       dispatch(updateGoal(goal));
       return data[0].id;
     } catch (error) {
@@ -96,7 +102,7 @@ export const fetchResult = createAsyncThunk(
   async (roomId: string, { dispatch }) => {
     try {
       dispatch(setLoadingResult(true));
-      const response = await fetch(`/api/room/${roomId}/result`, {
+      const response = await fetch(`api/v1/ideas/meeting/${roomId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -118,17 +124,25 @@ export const patchGoal = createAsyncThunk(
     { goal, meetingId }: { goal: string; meetingId: number },
     { dispatch }
   ) => {
-    const supabase = createClient();
     try {
-      const { data, error } = await supabase
-        .from("meetings")
-        .update({ goal })
-        .eq("id", meetingId)
-        .select(); // Add .select() to return the updated data
-      if (error) throw error;
+      const response = await fetch(`/api/v1/meetings/${meetingId}`, {
+        method: "PATCH", // Using your PATCH endpoint
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ goal }), // Only sending the field to update
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update goal");
+      }
+
+      const data = await response.json();
+      
+      // Same Redux updates as before
       dispatch(updateGoal(goal));
-      dispatch(setRoomDetails(data[0]));
+      dispatch(setRoomDetails(data));
       return data;
     } catch (error) {
       console.error("Error updating goal:", error);
@@ -139,17 +153,24 @@ export const patchGoal = createAsyncThunk(
 
 export const getRoomDetails = createAsyncThunk(
   "room/getRoomDetails",
-  async (meetingId: number, { dispatch }) => {
-    const supabase = createClient();
+  async (meetingId: number, { dispatch }) => {    
     try {
-      const { data, error } = await supabase
-        .from("meetings")
-        .select("*")
-        .eq("id", meetingId)
-        .single();
+      // Call your API route instead of Supabase directly
+      const response = await fetch(`/api/v1/meetings/${meetingId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      if (error) throw error;
-      if (!data) throw new Error("Meeting not found");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get meeting details");
+      }
+
+      const data = await response.json();
+      
+      // Same Redux updates as before
       dispatch(setRoomDetails(data));
       return data;
     } catch (error) {
