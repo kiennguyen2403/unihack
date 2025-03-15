@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: NextRequest) {
+  console.log('POST request received');
     try {
         const body = await req.json();
         const { topic, ideas } = body;
@@ -26,16 +27,27 @@ export async function POST(req: NextRequest) {
                 "content": [
                   {
                     "type": "text",
-                    "text": "You are tasked with providing feedback on a list of brainstormed ideas related to a specific topic. Your goal is to analyze each idea and provide pros and cons for each. You will present your feedback in a specific JSON format.\n\nHere is the topic:\n<topic>\n{{TOPIC}}\n</topic>\n\nHere is the list of brainstormed ideas:\n<brainstormed_ideas>\n{{BRAINSTORMED_IDEAS}}\n</brainstormed_ideas>\n\nFor each idea in the list, follow these steps:\n1. Carefully consider the idea in the context of the given topic.\n2. Identify at least one pro (advantage or positive aspect) of the idea.\n3. Identify at least one con (disadvantage or negative aspect) of the idea.\n4. Summarize your analysis in a brief explanation.\n\nStructure your feedback in the following JSON format:\n\n{\n  \"results\": [\n    {\n      \"title\": \"Idea 1\",\n      \"explanation\": \"Pro: [Advantage of the idea]. Con: [Disadvantage of the idea]. [Brief summary of analysis].\"\n    },\n    {\n      \"title\": \"Idea 2\",\n      \"explanation\": \"Pro: [Advantage of the idea]. Con: [Disadvantage of the idea]. [Brief summary of analysis].\"\n    },\n    // ... repeat for each idea\n  ],\n  \"metadata\": {\n    \"additionalInfo\": \"[Any overall observations, patterns, or suggestions related to the brainstormed ideas as a whole]\"\n  }\n}\n\nIn the \"metadata\" section, provide any additional information or insights you have about the brainstormed ideas as a whole. This could include overall trends, suggestions for improvement, or any other relevant observations.\n\nBefore submitting your response, double-check that your output strictly adheres to the required JSON format. Ensure that all ideas are included, each with a title and explanation, and that the metadata section is properly filled out.\n\nOutput only the JSON, so that your raw message can parsed into JSON. This means no extra words or characters outside of your response."
+                    "text": `You are tasked with providing feedback on a list of brainstormed ideas related to a specific topic. Your goal is to analyze each idea and provide pros and cons for each. You will present your feedback in a specific JSON format. Here is the topic: <topic> {{TOPIC}} </topic> Here is the list of brainstormed ideas: <brainstormed_ideas> {{BRAINSTORMED_IDEAS}} </brainstormed_ideas> For each idea in the list, follow these steps: Carefully consider the idea in the context of the given topic. Identify at least one pro (advantage or positive aspect) of the idea. Identify at least one con (disadvantage or negative aspect) of the idea. Summarize your analysis in a brief explanation. CRITICAL INSTRUCTION: Your response MUST be ONLY valid, parseable JSON with absolutely nothing else before or after. No explanations, no markdown formatting (like \`\`\`json), no introductions, no conclusions. Use exactly this format: { "results": [ { "title": "Idea 1", "explanation": "Pro: [Advantage of the idea]. Con: [Disadvantage of the idea]. [Brief summary of analysis]." }, { "title": "Idea 2", "explanation": "Pro: [Advantage of the idea]. Con: [Disadvantage of the idea]. [Brief summary of analysis]." } ], "metadata": { "additionalInfo": "[Any overall observations, patterns, or suggestions related to the brainstormed ideas as a whole]" } } In the "metadata" section, provide additional insights about the ideas as a whole. FINAL CHECKLIST BEFORE RESPONDING: Is your entire response valid JSON that could be parsed by a JSON parser? Did you remove ALL text outside the JSON structure? Did you ensure all quotes within strings are properly escaped? Did you avoid using any markdown formatting symbols? Are you certain your response begins with { and ends with } with nothing else?`
                   }
                 ]
               }
             ]
           });
 
-        const responseContent = JSON.stringify(msg.content[0].type === 'text' && msg.content[0].text);
-
-        const parsedResponse = JSON.parse(responseContent);
+          let responseContent = '';
+          if (msg.content[0].type === 'text') {
+              responseContent = msg.content[0].text;
+          }
+          
+          // Parse the text content as JSON
+          let parsedResponse;
+          try {
+              parsedResponse = JSON.parse(responseContent);
+              console.log('Successfully parsed response:', parsedResponse);
+          } catch (error) {
+              console.error('Failed to parse AI response as JSON:', responseContent);
+              throw new Error('AI returned invalid JSON format');
+          }
         
         return NextResponse.json(parsedResponse);
     } catch (error: any) {
