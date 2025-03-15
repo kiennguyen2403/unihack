@@ -18,6 +18,11 @@ interface RoomState {
   roomDetails: Meeting | null;
 }
 
+interface AIResultRequest {
+  topic: string;
+  ideas: string[];
+}
+
 const initialState: RoomState = {
   roomId: null,
   goal: null,
@@ -68,33 +73,26 @@ const roomSlice = createSlice({
 
 export const createRoom = createAsyncThunk(
   "room/createRoom",
-  async ({ goal, user_id }: { goal: string; user_id: string }, { dispatch }) => {
-    const supabase = createClient();
+  async (goal: string, { dispatch }) => {
     try {
       dispatch(setCreatedRoomId(null));
-      const { data, error } = await supabase
-        .from("meetings")
-        .insert([
-          {
-            goal: goal,
-          },
-        ])
-        .select();
-      if (error) throw error;
-      dispatch(setCreatedRoomId(data[0].id));
+      const response = await fetch("/api/v1/meetings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ goal }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to create room");
+      }
+      
+      const data = await response.json();
+      console.debug("Created room:", data);
+
+      dispatch(setCreatedRoomId(data.id));
       dispatch(updateGoal(goal));
-
-      const { error: EventError } = await supabase
-        .from("events")
-        .insert({
-          user_id: user_id,
-          meeting_id: data[0].id,
-          role: "HOST",
-          status: "JOIN"
-        })
-
-      if (EventError) throw EventError;
-
       return data[0].id;
     } catch (error) {
       console.error("Error creating room:", error);
@@ -115,7 +113,7 @@ export const fetchResult = createAsyncThunk(
   async (roomId: string, { dispatch }) => {
     try {
       dispatch(setLoadingResult(true));
-      const response = await fetch(`/api/room/${roomId}/result`, {
+      const response = await fetch(`api/v1/ideas/meeting/${roomId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -137,17 +135,25 @@ export const patchGoal = createAsyncThunk(
     { goal, meetingId }: { goal: string; meetingId: number },
     { dispatch }
   ) => {
-    const supabase = createClient();
     try {
-      const { data, error } = await supabase
-        .from("meetings")
-        .update({ goal })
-        .eq("id", meetingId)
-        .select(); // Add .select() to return the updated data
-      if (error) throw error;
+      const response = await fetch(`/api/v1/meetings/${meetingId}`, {
+        method: "PATCH", // Using your PATCH endpoint
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ goal }), // Only sending the field to update
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update goal");
+      }
+
+      const data = await response.json();
+      
+      // Same Redux updates as before
       dispatch(updateGoal(goal));
-      dispatch(setRoomDetails(data[0]));
+      dispatch(setRoomDetails(data));
       return data;
     } catch (error) {
       console.error("Error updating goal:", error);
@@ -158,17 +164,24 @@ export const patchGoal = createAsyncThunk(
 
 export const getRoomDetails = createAsyncThunk(
   "room/getRoomDetails",
-  async (meetingId: number, { dispatch }) => {
-    const supabase = createClient();
+  async (meetingId: number, { dispatch }) => {    
     try {
-      const { data, error } = await supabase
-        .from("meetings")
-        .select("*")
-        .eq("id", meetingId)
-        .single();
+      // Call your API route instead of Supabase directly
+      const response = await fetch(`/api/v1/meetings/${meetingId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      if (error) throw error;
-      if (!data) throw new Error("Meeting not found");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get meeting details");
+      }
+
+      const data = await response.json();
+      
+      // Same Redux updates as before
       dispatch(setRoomDetails(data));
       return data;
     } catch (error) {
