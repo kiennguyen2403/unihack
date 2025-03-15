@@ -14,12 +14,14 @@ import {
 import Countdown from "@/components/common/Coutdown";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 const SessionPage = () => {
   const [ideas, setIdeas] = useState<string[]>([]);
   const { roomId, goal } = useAppSelector((state) => state.room);
   const [currentIdea, setCurrentIdea] = useState("");
   const [isEnded, setIsEnded] = useState(false);
+  const router = useRouter();
   const channel = useRef<RealtimeChannel | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -68,7 +70,7 @@ const SessionPage = () => {
       if (status === "SUBSCRIBED") {
         console.log("Successfully subscribed to channel");
       } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
-        console.error("Channel error:", status);
+        router.push(`/room/${roomId}/result`);
       }
     });
 
