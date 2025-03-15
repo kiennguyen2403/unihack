@@ -1,3 +1,6 @@
+export const THUBBLE_ROLE_KEY = "thubble_role";
+export const THUBBLE_ROOM_ID_KEY = "thubble_room_id";
+
 export const DUMMY_RESULT: BrainstormResult[] = [
   {
     title: "Dummy Result 1",

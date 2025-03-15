@@ -1,8 +1,15 @@
-interface BrainstormResult {
+export interface BrainstormResult {
   title: string;
   explanation: string;
 }
 
-interface BrainstormResultMetadata {
+export interface BrainstormResultMetadata {
   additionalInfo: string;
+}
+
+export interface Meeting {
+  id: number;
+  title: string;
+  goal: string;
+  created_at: string;
 }

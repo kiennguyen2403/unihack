@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +13,7 @@ import {
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
-import { useAppDispatch } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { createRoom } from "@/store/slices/roomSlice";
 
 const CreateRoomPage = () => {
@@ -21,18 +21,24 @@ const CreateRoomPage = () => {
   const [roomId, setRoomId] = useState("");
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const createdRoomId = useAppSelector((state) => state.room.createdRoomId);
 
   const handleCreateRoom = () => {
+    // TODO: dispatch a boolean to indicate master of the room
     if (!goal.trim()) return;
-    const newRoomId = Date.now().toString(); // Temporary implementation
-    dispatch(createRoom({ roomId: newRoomId, goal: goal.trim() }));
-    router.push(`/room/${newRoomId}`);
+    dispatch(createRoom(goal));
   };
 
   const handleJoinRoom = () => {
     if (!roomId.trim()) return;
     router.push(`/room/${roomId}`);
   };
+
+  useEffect(() => {
+    if (createdRoomId) {
+      router.push(`/room/${createdRoomId}`);
+    }
+  }, [createdRoomId]);
 
   return (
     <div className="w-[50%] flex justify-center items-center min-h-[80vh]">
