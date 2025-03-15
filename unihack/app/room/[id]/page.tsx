@@ -36,7 +36,7 @@ const RoomPage = () => {
   };
 
   return (
-    <div className="w-full flex justify-center items-center min-h-[80vh]">
+    <div className="w-[50%] flex justify-center items-center min-h-[80vh]">
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Waiting Room</CardTitle>

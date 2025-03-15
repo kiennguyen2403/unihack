@@ -53,7 +53,7 @@ export default function ResultPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6 w-[700px]">
+    <div className="container mx-auto p-6 space-y-6 w-full]">
       <ScrollArea className="h-[600px] pr-4">
         <div className="space-y-4">
           {result.map((item, index) => (
