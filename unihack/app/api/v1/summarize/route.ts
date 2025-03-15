@@ -1,10 +1,11 @@
 import { createDataStaxClient, Idea } from "@/utils/datastax";
 import { NextRequest } from "next/server";
 
+const db = createDataStaxClient();
 
 export async function POST(req: NextRequest) {
     try {
-        const db = createDataStaxClient();
+
         const {
             meetingId,
             title,
