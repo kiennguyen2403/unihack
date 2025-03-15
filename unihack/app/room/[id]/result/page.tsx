@@ -56,7 +56,7 @@ export default function ResultPage() {
         </div>
       )}
 
-      {!result || !resultMetadata ? (
+      {!result ? (
         <div className="container mx-auto p-6">
           <Card>
             <CardContent className="p-6">
@@ -80,17 +80,19 @@ export default function ResultPage() {
               />
             ))}
           </div>
-          <Card className="w-full">
-            <CardHeader className="py-3">
-              <CardTitle className="text-sm">Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="py-2">
-              <p className="text-muted-foreground text-xs">
-                {resultMetadata?.additionalInfo ||
-                  "No additional info available"}
-              </p>
-            </CardContent>
-          </Card>
+          {resultMetadata && (
+            <Card className="w-full">
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm">Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="py-2">
+                <p className="text-muted-foreground text-xs">
+                  {resultMetadata.additionalInfo ||
+                    "No additional info available"}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

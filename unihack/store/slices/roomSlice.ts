@@ -20,11 +20,6 @@ interface RoomState {
   loading: boolean;
 }
 
-interface AIResultRequest {
-  topic: string;
-  ideas: string[];
-}
-
 const initialState: RoomState = {
   roomId: null,
   goal: null,
@@ -74,6 +69,14 @@ const roomSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
+    setStoredResult: (state, action: PayloadAction<BrainstormResult[]>) => {
+      const results = action.payload.map((result) => ({
+        title: result.title,
+        explanation: result.explanation,
+      }));
+      console.log("results", results);
+      state.result = results;
+    },
   },
 });
 
@@ -111,14 +114,14 @@ export const fetchResult = createAsyncThunk(
   async (roomId: string, { dispatch }) => {
     try {
       dispatch(setLoadingResult(true));
-      const response = await fetch(`api/v1/ideas/meeting/${roomId}`, {
+      const response = await fetch(`/api/v1/ideas/meetings/${roomId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
       });
       const data = await response.json();
-      dispatch(setResult(data.result));
+      dispatch(setStoredResult(data));
     } catch (error) {
       console.error("Error fetching result:", error);
     } finally {
@@ -300,5 +303,6 @@ export const {
   setResult,
   setCreatedRoomId,
   setRoomDetails,
+  setStoredResult,
 } = roomSlice.actions;
 export default roomSlice.reducer;
