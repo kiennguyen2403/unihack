@@ -59,6 +59,33 @@ export async function PUT(
     }
 }
 
+export async function PATCH(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }) {
+    try {
+        const { userId, getToken } = getAuth(request);
+        if (!userId) {
+            return new Response('Unauthorized', { status: 401 });
+        }
+        const supabase = await createClient();
+        const { id } = await params;
+        const { data, error } = await supabase
+            .from('meetings')
+            .update(await request.json())
+            .eq('id', id);
+        if (error) {
+            throw error;
+        }
+        return Response.json(data);
+    } catch (e) {
+        return Response.json({
+            error: e,
+        }, {
+            status: 500,
+        });
+    }
+}
+
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }) {
