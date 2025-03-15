@@ -11,6 +11,7 @@ const LoadingOverlay = ({
   onComplete,
 }: LoadingOverlayProps) => {
   const [visible, setVisible] = useState(true);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -18,9 +19,16 @@ const LoadingOverlay = ({
       if (onComplete) {
         onComplete();
       }
-    }, 5000);
+    }, 8000);
 
-    return () => clearTimeout(timer);
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => Math.min(prev + 100 / 8, 100));
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(progressInterval);
+    };
   }, [onComplete]);
 
   if (!visible) return null;
@@ -37,6 +45,12 @@ const LoadingOverlay = ({
         <p className="text-2xl font-medium bg-gradient-to-r from-purple-300 via-pink-200 to-blue-300 bg-clip-text text-transparent animate-pulse text-center">
           {message}
         </p>
+        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-purple-300 via-pink-200 to-blue-300 transition-all duration-1000 ease-linear"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
     </div>
   );
