@@ -1,22 +1,30 @@
 import { useEffect, useState, useRef } from "react";
 
 const Countdown = ({ onEnd }: { onEnd: () => void }) => {
-  const [timeLeft, setTimeLeft] = useState(30 * 1000); // 30 seconds in milliseconds
+  const [timeLeft, setTimeLeft] = useState(5 * 1000); // 30 seconds in milliseconds
   const timerRef = useRef<NodeJS.Timeout | null>(null); // Store interval reference
+  const hasEndedRef = useRef(false);
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setTimeLeft((prevTime) => {
-        if (prevTime <= 10) {
+        const newTime = Math.max(0, prevTime - 10); // Prevent negative values
+        if (newTime <= 0 && !hasEndedRef.current) {
           clearInterval(timerRef.current!);
-          onEnd();
+          hasEndedRef.current = true;
+          // Schedule onEnd callback for next tick to avoid state updates during render
+          setTimeout(onEnd, 0);
           return 0;
         }
-        return prevTime - 10;
+        return newTime;
       });
     }, 10);
 
-    return () => clearInterval(timerRef.current!); // Cleanup
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, [onEnd]);
 
   const minutes = Math.floor(timeLeft / (60 * 1000));
@@ -26,9 +34,9 @@ const Countdown = ({ onEnd }: { onEnd: () => void }) => {
   return (
     <div
       className={`text-4xl font-bold transition-colors duration-300 p-2 ${
-        timeLeft <= 10 * 1000
+        timeLeft <= 120 * 1000 // 2 MINUTES
           ? "text-red-500"
-          : timeLeft <= 20 * 1000
+          : timeLeft <= 10 * 1000
             ? "text-orange-500"
             : "text-foreground"
       }`}

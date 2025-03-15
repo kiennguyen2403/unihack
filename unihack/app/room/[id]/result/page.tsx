@@ -6,14 +6,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { fetchResult } from "@/store/slices/roomSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import ResultIdeaCard from "./ResultIdeaCard";
 
 export default function ResultPage() {
   const dispatch = useDispatch<AppDispatch>();
   const params = useParams(); // Get params dynamically
 
-  const { result, resultMetadata, loadingResult } = useSelector(
+  const { result, resultMetadata, loadingResult, roomDetails } = useSelector(
     (state: RootState) => state.room
   );
 
@@ -56,21 +56,17 @@ export default function ResultPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6 w-full]">
-      <ScrollArea className="h-[600px] pr-4">
-        <div className="space-y-4">
-          {result.map((item, index) => (
-            <Card key={index} className="w-full">
-              <CardHeader>
-                <CardTitle>{item.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{item.explanation}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </ScrollArea>
-      <Card className="w-[500px]">
+      <h1 className="text-2xl font-bold">{"Goal:  " + roomDetails?.goal}</h1>
+      <div className="space-y-4">
+        {result.map((item, index) => (
+          <ResultIdeaCard
+            key={index}
+            title={item.title}
+            explanation={item.explanation}
+          />
+        ))}
+      </div>
+      <Card className="w-full">
         <CardHeader className="py-3">
           <CardTitle className="text-sm">Overview</CardTitle>
         </CardHeader>

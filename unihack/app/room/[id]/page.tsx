@@ -42,7 +42,7 @@ const RoomPage = () => {
 
   useEffect(() => {
     dispatch(getDataFromLocalStorage());
-  }, []);
+  }, [roomId]);
 
   useEffect(() => {
     if (role === "host") {

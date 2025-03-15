@@ -33,7 +33,7 @@ const CreateRoomPage = () => {
 
   const handleCreateRoom = () => {
     if (!goal.trim() || !user?.id) return;
-    dispatch(createRoom({ goal, user_id: user?.id }));
+    dispatch(createRoom(goal));
   };
 
   const handleJoinRoom = () => {
@@ -47,13 +47,12 @@ const CreateRoomPage = () => {
     if (createdRoomId) {
       dispatch(updateHostData(createdRoomId));
       router.push(`/room/${createdRoomId}`);
-      // TODO: call the event to set host here
     }
   }, [createdRoomId]);
 
-  useEffect(() => {
-    dispatch(clearUserData());
-  }, []);
+  // useEffect(() => {
+  //   dispatch(clearUserData());
+  // }, []);
 
   return (
     <div className="w-[50%] flex justify-center items-center min-h-[80vh]">

@@ -53,9 +53,9 @@ const userSlice = createSlice({
     getDataFromLocalStorage: (state) => {
       const role = localStorage.getItem(THUBBLE_ROLE_KEY);
       const roomId = localStorage.getItem(THUBBLE_ROOM_ID_KEY);
-      if (role && roomId) {
-        state.role = role as "member" | "host";
-        state.roomId = roomId;
+      setRole(role as "member" | "host");
+      if (roomId) {
+        setRoomId(roomId);
       }
     },
     clearUserData: (state) => {
@@ -67,21 +67,20 @@ const userSlice = createSlice({
   },
 });
 
-
 export const joinRoom = createAsyncThunk(
   "room/joinRoom",
-  async ({ meeting_id, user_id }: { meeting_id: string; user_id: string }, { dispatch }) => {
+  async (
+    { meeting_id, user_id }: { meeting_id: string; user_id: string },
+    { dispatch }
+  ) => {
     const supabase = createClient();
     try {
-
-      const { error: EventError } = await supabase
-        .from("events")
-        .insert({
-          user_id: user_id,
-          meeting_id: meeting_id,
-          role: "ATTEND",
-          status: "JOIN"
-        })
+      const { error: EventError } = await supabase.from("events").insert({
+        user_id: user_id,
+        meeting_id: meeting_id,
+        role: "ATTEND",
+        status: "JOIN",
+      });
 
       dispatch(updateMemberData(meeting_id));
 

@@ -83,28 +83,17 @@ export const createRoom = createAsyncThunk(
         },
         body: JSON.stringify({ goal }),
       });
-      
       if (!response.ok) {
         throw new Error("Failed to create room");
       }
-      
       const data = await response.json();
       console.debug("Created room:", data);
-
       dispatch(setCreatedRoomId(data.id));
       dispatch(updateGoal(goal));
-      return data[0].id;
     } catch (error) {
       console.error("Error creating room:", error);
       throw error;
     }
-  }
-);
-
-export const endRoomSession = createAsyncThunk(
-  "room/endRoomSession",
-  async (roomId: string, { dispatch }) => {
-    const supabase = createClient();
   }
 );
 
@@ -150,7 +139,7 @@ export const patchGoal = createAsyncThunk(
       }
 
       const data = await response.json();
-      
+
       // Same Redux updates as before
       dispatch(updateGoal(goal));
       dispatch(setRoomDetails(data));
@@ -164,7 +153,7 @@ export const patchGoal = createAsyncThunk(
 
 export const getRoomDetails = createAsyncThunk(
   "room/getRoomDetails",
-  async (meetingId: number, { dispatch }) => {    
+  async (meetingId: number, { dispatch }) => {
     try {
       // Call your API route instead of Supabase directly
       const response = await fetch(`/api/v1/meetings/${meetingId}`, {
@@ -180,7 +169,7 @@ export const getRoomDetails = createAsyncThunk(
       }
 
       const data = await response.json();
-      
+
       // Same Redux updates as before
       dispatch(setRoomDetails(data));
       return data;

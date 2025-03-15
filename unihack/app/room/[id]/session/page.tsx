@@ -14,7 +14,6 @@ import {
 import Countdown from "@/components/common/Coutdown";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
 import { TypingBubble } from "@/components/common/TypingBubble";
 import { Idea } from "@/utils/types";
 import IdeaBall from "@/components/common/IdeaBall";
@@ -32,13 +31,15 @@ const SessionPage = () => {
   const [currentIdea, setCurrentIdea] = useState("");
 
   const [isEnded, setIsEnded] = useState(false);
-  const router = useRouter();
   const [isTimesUp, setIsTimesUp] = useState(false);
   const channel = useRef<RealtimeChannel | null>(null);
   const [someoneIsTyping, setSomeoneIsTyping] = useState(false);
 
   const { user } = useUser();
   const userId = user?.id;
+
+  const params = useParams();
+  const roomId = typeof params.id === "string" ? parseInt(params.id) : null;
 
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -56,9 +57,27 @@ const SessionPage = () => {
     }
   };
 
-  // todo: get room id from url
-  const params = useParams();
-  const roomId = typeof params.id === "string" ? parseInt(params.id) : null;
+  const handleEndSession = () => {
+    channel.current?.send({
+      type: "broadcast",
+      event: "END_SESSION",
+    });
+    setIsEnded(true);
+    // TODO: add a loading state for generating AI analysis and then redirect
+    dispatch(
+      endSessionAndGetResult({
+        roomId: Number(roomId),
+        ideas: ideas.map((idea) => idea.idea),
+        goal: roomDetails?.goal || "",
+      })
+    );
+  };
+
+  useEffect(() => {
+    if (result && isEnded) {
+      router.push(`/room/${roomId}/results`);
+    }
+  }, [result, isEnded]);
 
   useEffect(() => {
     if (roomId) {
@@ -88,6 +107,12 @@ const SessionPage = () => {
       });
     });
 
+    // Handle END_SESSION event
+    channel.current.on("broadcast", { event: "END_SESSION" }, () => {
+      setIsEnded(true);
+      router.push(`/room/${roomId}/result`);
+    });
+
     // Handle TYPING_IDEA event (optional: could show who's typing)
     channel.current.on("broadcast", { event: "TYPING_IDEA" }, ({ payload }) => {
       setSomeoneIsTyping(!!payload.idea.trim());
@@ -97,8 +122,6 @@ const SessionPage = () => {
     channel.current.subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
         console.log("Successfully subscribed to channel");
-      } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
-        router.push(`/room/${roomId}/result`);
       }
     });
 
@@ -110,28 +133,6 @@ const SessionPage = () => {
       }
     };
   }, [roomId]); // Add roomId as dependency since it's used in the channel name
-
-  const handleEndSession = () => {
-    channel.current?.send({
-      type: "broadcast",
-      event: "END_SESSION",
-    });
-    setIsEnded(true);
-    // TODO: add a loading state for generating AI analysis and then redirect
-    dispatch(
-      endSessionAndGetResult({
-        roomId: Number(roomId),
-        ideas: ideas.map((idea) => idea.idea),
-        goal: roomDetails?.goal || "",
-      })
-    );
-  };
-
-  useEffect(() => {
-    if (result) {
-      router.push(`/room/${roomId}/results`);
-    }
-  }, [result]);
 
   return (
     <div className="w-full flex justify-center items-center min-h-[80vh]">
@@ -166,6 +167,7 @@ const SessionPage = () => {
           <form onSubmit={handleSubmit} className="space-y-2">
             <div className="flex gap-2">
               <Input
+                disabled={isEnded}
                 value={currentIdea}
                 onChange={(e) => {
                   channel.current?.send({
@@ -177,7 +179,9 @@ const SessionPage = () => {
                 }}
                 placeholder="Share your idea..."
               />
-              <Button type="submit">Add</Button>
+              <Button type="submit" disabled={isEnded}>
+                Add
+              </Button>
             </div>
           </form>
         </CardContent>
