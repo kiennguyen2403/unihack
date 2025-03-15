@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
 
 const NavigationBar = () => {
   return (
@@ -15,8 +22,13 @@ const NavigationBar = () => {
         </div>
         <div className="flex items-center gap-4">
           {/* TODO: add login and register buttons here */}
-          <Button variant="outline">Login</Button>
-          <Button>Sign up</Button>
+          <SignedOut>
+            <SignInButton />
+            <SignUpButton />
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
         </div>
       </div>
     </nav>
