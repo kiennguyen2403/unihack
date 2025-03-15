@@ -49,6 +49,11 @@ const RoomPage = () => {
           <div>
             <div className="flex justify-between items-center">
               <Label className="text-lg">Goal</Label>
+              {!isEditing && (
+                <Button onClick={handleEditGoal} variant="ghost" size="sm">
+                  Edit
+                </Button>
+              )}
             </div>
             {isEditing ? (
               <div className="flex gap-2 mt-2">
@@ -59,13 +64,8 @@ const RoomPage = () => {
                 <Button onClick={handleSaveGoal}>Save</Button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <div className="flex-1 mt-2 p-4 rounded-lg border">
-                  <p className="text-gray-700">{goal || "No goal set"}</p>
-                </div>
-                <Button onClick={handleEditGoal} variant="ghost" size="sm">
-                  Edit
-                </Button>
+              <div className="mt-2 p-4 rounded-lg border">
+                <p className="text-gray-700">{goal || "No goal set"}</p>
               </div>
             )}
           </div>
