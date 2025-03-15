@@ -236,17 +236,6 @@ export const endSessionAndGetResult = createAsyncThunk(
         })
       );
 
-      // const supabase = createClient();
-      // const { data, error } = await supabase.from("ideas").insert(
-      //   aiData.results.map((result: BrainstormResult) => ({
-      //     meeting_id: roomId,
-      //     title: result.title,
-      //     explanation: result.explanation,
-      //   }))
-      // );
-      // if (error) throw error;
-
-      // Save ideas and summary concurrently with Promise.all
       const [ideasResponse, summaryResponse] = await Promise.all([
         fetch(`/api/v1/ideas`, {
           method: "POST",
