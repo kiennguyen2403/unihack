@@ -23,40 +23,61 @@ const SessionPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (currentIdea.trim()) {
-      setIdeas([...ideas, currentIdea.trim()]);
+      const newIdea = currentIdea.trim();
+      channel.current?.send({
+        type: "broadcast",
+        event: "ADD_IDEA",
+        payload: { idea: newIdea },
+      });
       setCurrentIdea("");
     }
   };
 
   useEffect(() => {
-    if (!channel.current) {
-      const client = createClient();
-      channel.current = client.channel(`room:${roomId}`, {
-        config: {
-          broadcast: {
-            self: true,
-          },
+    const client = createClient();
+    channel.current = client.channel(`room:${roomId}`, {
+      config: {
+        broadcast: {
+          self: true, // This ensures the sender also receives their own messages
+          ack: true, // Request acknowledgment
         },
+      },
+    });
+
+    // Handle ADD_IDEA event
+    channel.current.on("broadcast", { event: "ADD_IDEA" }, ({ payload }) => {
+      console.log("Received new idea:", payload.idea);
+      setIdeas((prevIdeas) => {
+        // Prevent duplicate ideas
+        if (!prevIdeas.includes(payload.idea)) {
+          return [...prevIdeas, payload.idea];
+        }
+        return prevIdeas;
       });
+    });
 
-      channel.current
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "events" },
-          (payload) => {
-            {
-              console.log("Received payload", payload);
-            }
-          }
-        )
-        .subscribe();
-    }
+    // Handle TYPING_IDEA event (optional: could show who's typing)
+    channel.current.on("broadcast", { event: "TYPING_IDEA" }, ({ payload }) => {
+      console.log("Someone is typing:", payload.idea);
+    });
 
+    // Subscribe to the channel
+    channel.current.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        console.log("Successfully subscribed to channel");
+      } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
+        console.error("Channel error:", status);
+      }
+    });
+
+    // Cleanup
     return () => {
-      channel.current?.unsubscribe();
-      channel.current = null;
+      if (channel.current) {
+        channel.current.unsubscribe();
+        channel.current = null;
+      }
     };
-  }, []);
+  }, [roomId]); // Add roomId as dependency since it's used in the channel name
 
   return (
     <div className="w-full flex justify-center items-center min-h-[80vh]">
@@ -88,7 +109,14 @@ const SessionPage = () => {
             <div className="flex gap-2">
               <Input
                 value={currentIdea}
-                onChange={(e) => setCurrentIdea(e.target.value)}
+                onChange={(e) => {
+                  channel.current?.send({
+                    type: "broadcast",
+                    event: "TYPING_IDEA",
+                    payload: { idea: e.target.value },
+                  });
+                  setCurrentIdea(e.target.value);
+                }}
                 placeholder="Share your idea..."
               />
               <Button type="submit">Add</Button>
