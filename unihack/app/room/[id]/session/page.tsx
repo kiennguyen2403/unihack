@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppSelector } from "@/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,11 +11,14 @@ import {
   CardContent,
   CardDescription,
 } from "@/components/ui/card";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 
 const SessionPage = () => {
   const [ideas, setIdeas] = useState<string[]>([]);
+  const { roomId, goal } = useAppSelector((state) => state.room);
   const [currentIdea, setCurrentIdea] = useState("");
-  const goal = useAppSelector((state) => state.room.goal);
+  const channel = useRef<RealtimeChannel | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +27,36 @@ const SessionPage = () => {
       setCurrentIdea("");
     }
   };
+
+  useEffect(() => {
+    if (!channel.current) {
+      const client = createClient();
+      channel.current = client.channel(`room:${roomId}`, {
+        config: {
+          broadcast: {
+            self: true,
+          },
+        },
+      });
+
+      channel.current
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "events" },
+          (payload) => {
+            {
+              console.log("Received payload", payload);
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      channel.current?.unsubscribe();
+      channel.current = null;
+    };
+  }, []);
 
   return (
     <div className="w-full flex justify-center items-center min-h-[80vh]">

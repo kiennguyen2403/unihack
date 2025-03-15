@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/store";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import {
   CardContent,
   CardDescription,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { updateGoal } from "@/store/slices/roomSlice";
@@ -41,7 +41,7 @@ const RoomPage = () => {
   useEffect(() => {
     if (!channel.current) {
       const client = createClient();
-      channel.current = client.channel(`room:${roomId}`, {
+      channel.current = client.channel(`waitingroom:${roomId}`, {
         config: {
           broadcast: {
             self: true,
@@ -85,10 +85,10 @@ const RoomPage = () => {
             </div>
             {isEditing ? (
               <div className="flex gap-2 mt-2">
-                <Input
+                {/* <Input
                   value={editableGoal}
                   onChange={(e) => setEditableGoal(e.target.value)}
-                />
+                /> */}
                 <Button onClick={handleSaveGoal}>Save</Button>
               </div>
             ) : (
