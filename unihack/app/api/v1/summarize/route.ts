@@ -19,7 +19,12 @@ export async function POST(req: NextRequest) {
                 }
             }
         })
-        collection.insertMany(ideas.map((idea: Idea) => ({ ...idea, title })));
+
+        collection.insertMany(ideas.map((idea: Idea) => ({
+            ...idea,
+            title,
+            $vectorize: `idea: ${idea} | risk_level: ${idea.risk_level}`
+        })));
         return new Response('Success', { status: 200 });
 
     } catch (error) {

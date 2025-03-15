@@ -6,7 +6,7 @@ export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { userId, getToken } = getAuth(req);
+        const { userId } = getAuth(req);
         if (!userId) {
             return new Response('Unauthorized', { status: 401 });
         }
@@ -15,7 +15,10 @@ export async function GET(
         const question = searchParams.get('question');
         const db = createDataStaxClient();
         const collection = db.collection(`meetings ${id}`);
-        const ideas = collection.find({ value: { $search: question } });
+        const ideas = collection.find({
+            sort: { $vectorize: question },
+            limit: 3,
+        });
         return new Response(JSON.stringify(ideas), { status: 200 });
     } catch (error) {
         return new Response('Error', { status: 500 });
