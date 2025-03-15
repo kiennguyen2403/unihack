@@ -16,11 +16,7 @@ export default function Home() {
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4 mt-8">
-        <Button asChild size="lg" variant="default">
-          <Link href="/auth">Sign Up / Login</Link>
-        </Button>
-
-        <Button asChild size="lg" variant="outline">
+        <Button asChild size="lg">
           <Link href="/room">Get Started</Link>
         </Button>
       </div>

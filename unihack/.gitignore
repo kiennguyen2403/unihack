@@ -42,3 +42,5 @@ yarn-error.log*
 next-env.d.ts
 main_key.pem
 unihackgroup@gmail.com-token.json
+# clerk configuration (can include secrets)
+/.clerk/
