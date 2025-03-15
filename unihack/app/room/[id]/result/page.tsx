@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import { fetchResult } from "@/store/slices/roomSlice";
+import { fetchResult, getRoomDetails } from "@/store/slices/roomSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import ResultIdeaCard from "./ResultIdeaCard";
@@ -24,6 +24,7 @@ export default function ResultPage() {
     if (id) {
       if (!result) {
         dispatch(fetchResult(id));
+        dispatch(getRoomDetails(parseInt(id)));
       }
     }
   }, [dispatch, id, result]);
