@@ -6,10 +6,10 @@ export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }) {
     try {
-        // const { userId } = getAuth(req);
-        // if (!userId) {
-        //     return new Response('Unauthorized', { status: 401 });
-        // }
+        const { userId } = getAuth(req);
+        if (!userId) {
+            return new Response('Unauthorized', { status: 401 });
+        }
         const { id } = await params;
         const { searchParams } = new URL(req.url);
         const question = searchParams.get('question');
