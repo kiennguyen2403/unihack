@@ -1,23 +1,24 @@
 import { createClient } from "@/utils/supabase/server";
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser, getAuth } from '@clerk/nextjs/server';
+import { NextRequest } from "next/server";
 
 export async function GET(
-    request: Request, 
-    { params }: { params: Promise<{ userId: string }> }) {
+    request: NextRequest,
+    { params }: { params: Promise<{ meetingId: string }> }) {
     try {
-        const { userId, getToken } = await auth()
 
+        const { userId, getToken } = getAuth(request);
         if (!userId) {
-            return new Response('Unauthorized', { status: 401 })
+            return new Response('Unauthorized', { status: 401 });
         }
-
-        const token = await getToken({ template: 'supabase' })
-
+        
         const supabase = await createClient();
+        const { meetingId } = await params;
         const { data, error } = await supabase
-            .from('events')
+            .from('ideas')
             .select('*')
-            .eq('userId', userId);
+            .eq('meeting_id', meetingId);
+
         if (error) {
             throw error;
         }
