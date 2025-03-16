@@ -98,19 +98,34 @@ const RoomPage = () => {
         },
         (payload) => {
           const newEvent = payload.new;
+          console.log("New event:", newEvent);
           if (newEvent.user_id) {
             handleMemberInsert(newEvent.user_id, newEvent.role);
           }
         }
       )
       .on("broadcast", { event: "START_SESSION" }, () => {
-        console.log("Starting session");
         router.push(`/room/${roomId}/session`);
       })
-      .subscribe((status) => {
+      .on("broadcast", { event: "LEAVE_ROOM" }, () => {
+        router.push(`/user`);
+      })
+      .subscribe(async (status) => {
         console.log("Subscription status:", status);
         if (status === "SUBSCRIBED") {
           fetchInitialMembers();
+        } else {
+          await client
+            .from("events")
+            .update({
+              status: "LEAVE",
+            })
+            .eq("meeting_id", roomId)
+            .eq("user_id", currentUserId);
+
+          if (channel.current && isHost) {
+            client.removeChannel(channel.current);
+          }
         }
       });
 
@@ -180,6 +195,7 @@ const RoomPage = () => {
             };
           }
         }) || [];
+      console.log("Initial members:", newMembers);
       setMembers(newMembers);
     } catch (error) {
       console.error("Error fetching initial members:", error);
@@ -203,7 +219,11 @@ const RoomPage = () => {
         } else {
           return [
             ...prev,
-            { id: userId, email: generateRandomName(), role: "ATTENDEE" },
+            {
+              id: userId,
+              email: generateRandomName(),
+              role: role || "ATTENDEE",
+            },
           ];
         }
       }
@@ -213,6 +233,7 @@ const RoomPage = () => {
 
   // Handle member insert from real-time subscription
   const handleMemberInsert = (userId: string, role: string) => {
+    console.log("New member:", userId, role);
     setMembers((prev) => {
       if (!prev.some((m) => m.id === userId)) {
         if (userId === currentUserId) {
@@ -221,13 +242,17 @@ const RoomPage = () => {
             {
               id: userId,
               email: user?.email || "You",
-              role: role || role, // Use role from event or Redux
+              role, // Use role from event or Redux
             },
           ];
         } else {
           return [
             ...prev,
-            { id: userId, email: generateRandomName(), role: "ATTENDEE" },
+            {
+              id: userId,
+              email: generateRandomName(),
+              role,
+            },
           ];
         }
       }
@@ -299,16 +324,14 @@ const RoomPage = () => {
           <div>
             <Label className="text-lg">Members</Label>
             <div className="flex flex-wrap gap-2 mt-4">
-              <Badge variant="secondary" className="text-sm py-2 px-4">
-                {user?.email || "You"} ({role?.toUpperCase()})
-              </Badge>
               {members.map((member) => (
                 <Badge
                   key={member.id}
                   variant="secondary"
                   className="text-sm py-2 px-4"
                 >
-                  {member.email} ({member.role.toUpperCase()})
+                  {member.email} (
+                  {role?.toUpperCase() != "HOST" ? "ATTENDEE" : "HOST"})
                 </Badge>
               ))}
             </div>
