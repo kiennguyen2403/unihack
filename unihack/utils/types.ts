@@ -1,4 +1,5 @@
 export interface BrainstormResult {
+  votes: number | undefined;
   title: string;
   explanation: string;
   id?: number;

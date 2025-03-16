@@ -71,7 +71,7 @@ const RoomPage = () => {
   };
 
   useEffect(() => {
-    if (!channel.current) {
+    if (!channel.current && roomId) {
       const client = createClient();
       channel.current = client.channel(`waitingroom:${roomId}`, {
         config: {
@@ -84,7 +84,12 @@ const RoomPage = () => {
       channel.current
         .on(
           "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "events" },
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "events",
+            filter: `meeting_id=eq.${roomId}`,
+          },
           (payload) => {
             {
               console.log("Received payload", payload);
@@ -98,7 +103,7 @@ const RoomPage = () => {
       channel.current?.unsubscribe();
       channel.current = null;
     };
-  }, []);
+  }, [roomId]);
 
   return (
     <div className="w-[50%] flex justify-center items-center min-h-[80vh]">
