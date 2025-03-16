@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { useParams, useRouter } from "next/navigation";
 import { getRoomDetails, fetchResult } from "@/store/slices/roomSlice";
@@ -15,6 +15,7 @@ const IdeaDiscussionPage = () => {
   const { meetingId, ideaId } = useParams();
   const dispatch = useAppDispatch();
   const [userQuestion, setUserQuestion] = useState("");
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { result } = useAppSelector((state) => state.room);
   const { elaborateLoading } = useAppSelector((state) => state.discussion);
@@ -26,6 +27,12 @@ const IdeaDiscussionPage = () => {
     dispatch(getRoomDetails(Number(meetingId)));
     dispatch(fetchResult(meetingId as string));
   }, [dispatch, meetingId]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [contextHistory]);
 
   const handleSubmit = async () => {
     if (!userQuestion.trim() || !context) return;
@@ -43,7 +50,7 @@ const IdeaDiscussionPage = () => {
     <div className="flex flex-col ">
       <div className="flex-1 p-4">
         <div className="max-w-3xl mx-auto">
-          <ScrollArea className="h-[calc(70vh)]">
+          <ScrollArea ref={scrollAreaRef} className="h-[calc(70vh)]">
             {result && result[Number(ideaId)] && (
               <Card className="mb-8">
                 <CardContent className="pt-6">

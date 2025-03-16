@@ -31,24 +31,7 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <Provider store={store}>
       {isUserPage && (
-        <MeetingsHistory
-          meetings={[
-            {
-              id: 1,
-              title: "Meeting 1",
-              goal: "Goal 1",
-              created_at: "2021-01-01",
-            },
-            {
-              id: 2,
-              title: "Meeting 2",
-              goal: "Goal 2",
-              created_at: "2021-01-02",
-            },
-          ]}
-          collapsed={collapsed}
-          setCollapsed={setCollapsed}
-        />
+        <MeetingsHistory collapsed={collapsed} setCollapsed={setCollapsed} />
       )}
 
       <div
