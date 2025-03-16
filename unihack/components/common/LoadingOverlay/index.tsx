@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 interface LoadingOverlayProps {
   message?: string;
   onComplete?: () => void;
+  seconds?: number;
 }
 
 const LoadingOverlay = ({
   message = "Analyzing and cooking your brainstorms bubbles...",
   onComplete,
+  seconds = 8,
 }: LoadingOverlayProps) => {
   const [visible, setVisible] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -19,10 +21,10 @@ const LoadingOverlay = ({
       if (onComplete) {
         onComplete();
       }
-    }, 8000);
+    }, seconds * 1000);
 
     const progressInterval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + 100 / 8, 100));
+      setProgress((prev) => Math.min(prev + 100 / seconds, 100));
     }, 1000);
 
     return () => {

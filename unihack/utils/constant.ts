@@ -33,3 +33,7 @@ export const DUMMY_RESULT: BrainstormResult[] = [
 export const DUMMY_RESULT_METADATA: BrainstormResultMetadata = {
   additionalInfo: "Dummy explanation for the result",
 };
+
+export const JSONToPagragraph = (json: any) => {
+  return json.map((item: any) => item.text).join("\n");
+};
