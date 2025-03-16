@@ -18,6 +18,7 @@ interface RoomState {
   createdRoomId: string | null;
   roomDetails: Meeting | null;
   loading: boolean;
+  pastRooms: Meeting[];
 }
 
 const initialState: RoomState = {
@@ -30,6 +31,7 @@ const initialState: RoomState = {
   createdRoomId: null,
   roomDetails: null,
   loading: false,
+  pastRooms: [],
 };
 
 const roomSlice = createSlice({
@@ -76,6 +78,9 @@ const roomSlice = createSlice({
         votes: result.votes,
       }));
       state.result = results;
+    },
+    setPastRooms: (state, action: PayloadAction<Meeting[]>) => {
+      state.pastRooms = action.payload;
     },
     updateResultVote: (
       state,
@@ -254,6 +259,22 @@ export const endSessionAndGetResult = createAsyncThunk(
   }
 );
 
+export const fetchPastRooms = createAsyncThunk(
+  "room/fetchPastRooms",
+  async (_, { dispatch }) => {
+    try {
+      dispatch(setLoading(true));
+      const response = await fetch(`/api/v1/meetings`);
+      const data = await response.json();
+      dispatch(setPastRooms(data));
+    } catch (error) {
+      console.error("Error fetching past rooms:", error);
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+);
+
 export const updateVotes = createAsyncThunk(
   "room/updateVotes",
   async ({ title, votes, id }: { title: string; votes: number, id: string }, { }) => {
@@ -284,7 +305,8 @@ export const {
   setCreatedRoomId,
   setRoomDetails,
   setStoredResult,
-  updateResultVote
+  updateResultVote,
+  setPastRooms,
 } = roomSlice.actions;
 
 export default roomSlice.reducer;
