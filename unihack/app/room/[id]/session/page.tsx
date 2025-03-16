@@ -23,6 +23,7 @@ import {
   endSessionAndGetResult,
   getRoomDetails,
 } from "@/store/slices/roomSlice";
+import ReactConfetti from "react-confetti";
 
 const SessionPage = () => {
   const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -33,6 +34,7 @@ const SessionPage = () => {
   const [isTimesUp, setIsTimesUp] = useState(false);
   const channel = useRef<RealtimeChannel | null>(null);
   const [someoneIsTyping, setSomeoneIsTyping] = useState(false);
+  const [isExploding, setIsExploding] = useState(false);
 
   const { user } = useUser();
   const userId = user?.id;
@@ -108,6 +110,12 @@ const SessionPage = () => {
   }, [roomId, dispatch]);
 
   useEffect(() => {
+    if (isTimesUp) {
+      setIsExploding(true);
+    }
+  }, [isTimesUp]);
+
+  useEffect(() => {
     const client = createClient();
     channel.current = client.channel(`room:${roomId}`, {
       config: {
@@ -156,6 +164,7 @@ const SessionPage = () => {
 
   return (
     <div className="w-full flex justify-center items-center min-h-[80vh]">
+      {isExploding && <ReactConfetti />}
       <Card className="w-full">
         <CardHeader>
           <CardDescription className="text-center">
