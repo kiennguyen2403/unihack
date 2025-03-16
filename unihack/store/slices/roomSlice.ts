@@ -125,8 +125,6 @@ export const createRoom = createAsyncThunk(
       dispatch(setCreatedRoomId(data.id));
       dispatch(updateGoal(goal));
       const supabase = createClient();
-
-      console.log(data);
       const { error: EventError } = await supabase.from("events").insert({
         user_id: userId,
         meeting_id: data.id,
