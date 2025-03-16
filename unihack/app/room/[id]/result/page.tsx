@@ -23,9 +23,8 @@ export default function ResultPage() {
   const params = useParams(); // Get params dynamically
   const channel = useRef<RealtimeChannel | null>(null);
 
-  const { result, resultMetadata, loadingResult, roomDetails } = useSelector(
-    (state: RootState) => state.room
-  );
+  const { result, resultMetadata, loadingResult, roomDetails, loading } =
+    useSelector((state: RootState) => state.room);
 
   const id = params?.id as string | undefined;
 
@@ -90,9 +89,11 @@ export default function ResultPage() {
 
   return (
     <div>
-      <LoadingOverlay message="Analyzing your brainstorming session..." />
-
       {loadingResult && (
+        <LoadingOverlay message="Analyzing your brainstorming session..." />
+      )}
+
+      {loading && (
         <div className="container mx-auto p-6 space-y-6">
           <Skeleton className="h-8 w-1/3" />
           <div className="space-y-4">
@@ -116,7 +117,7 @@ export default function ResultPage() {
         </div>
       )}
 
-      {!result ? (
+      {!result && !loading ? (
         <div className="container mx-auto p-6">
           <Card>
             <CardContent className="p-6">
@@ -139,6 +140,7 @@ export default function ResultPage() {
                 explanation={item.explanation}
                 stars={item.votes}
                 onStarClick={() => handleVoting(item)}
+                id={item.id?.toString()}
               />
             ))}
           </div>

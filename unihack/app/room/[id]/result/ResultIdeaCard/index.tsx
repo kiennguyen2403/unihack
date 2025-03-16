@@ -1,11 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAppDispatch, useAppSelector } from "@/store";
+import {
+  addContext,
+  addContextHistory,
+  elaborateIdea,
+} from "@/store/slices/discussionSlice";
+import { useEffect } from "react";
+import LoadingOverlay from "@/components/common/LoadingOverlay";
+import { useRouter } from "next/navigation";
 
 interface ResultIdeaCardProps {
   title: string;
   explanation: string;
   stars?: number;
   onStarClick?: () => void;
+  id?: string;
 }
 
 const ResultIdeaCard = ({
@@ -13,9 +24,39 @@ const ResultIdeaCard = ({
   explanation,
   stars = 0,
   onStarClick,
+  id,
 }: ResultIdeaCardProps) => {
+  const dispatch = useAppDispatch();
+  const { roomDetails } = useAppSelector((state) => state.room);
+  const { elaboration, elaborateLoading } = useAppSelector(
+    (state) => state.discussion
+  );
+  const router = useRouter();
+
+  const handleElaborate = () => {
+    if (roomDetails) {
+      dispatch(
+        elaborateIdea({
+          topic: roomDetails?.goal,
+          idea: `"${title}"\n${explanation}`,
+        })
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (elaboration) {
+      dispatch(addContext({ text: elaboration }));
+      dispatch(addContextHistory({ text: elaboration }));
+      router.push(`/chat/${roomDetails?.id}/${id}`);
+    }
+  }, [elaboration, router, roomDetails, id]);
+
   return (
     <Card className="w-full">
+      {elaborateLoading && (
+        <LoadingOverlay message="Elaborating..." seconds={25} />
+      )}
       <CardHeader className="w-full flex justify-between">
         <div className="flex w-full justify-between items-center gap-2">
           <CardTitle>{title}</CardTitle>
@@ -30,7 +71,7 @@ const ResultIdeaCard = ({
           </button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <p className="text-muted-foreground">
           {explanation
             .replace(/\./g, ".<br/>")
@@ -44,6 +85,9 @@ const ResultIdeaCard = ({
               </span>
             ))}
         </p>
+        <Button variant="outline" className="w-full" onClick={handleElaborate}>
+          Elaborate on This
+        </Button>
       </CardContent>
     </Card>
   );

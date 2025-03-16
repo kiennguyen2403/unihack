@@ -73,6 +73,7 @@ const roomSlice = createSlice({
     },
     setStoredResult: (state, action: PayloadAction<BrainstormResult[]>) => {
       const results = action.payload.map((result) => ({
+        id: result.id,
         title: result.title,
         explanation: result.explanation,
         votes: result.votes,
@@ -101,7 +102,9 @@ const roomSlice = createSlice({
       const updatedIdea = action.payload;
       if (state.result) {
         state.result = state.result.map((item) =>
-          item.title === updatedIdea.title ? { ...item, votes: updatedIdea.votes } : item
+          item.title === updatedIdea.title
+            ? { ...item, votes: updatedIdea.votes }
+            : item
         );
       }
     });
@@ -137,7 +140,7 @@ export const fetchResult = createAsyncThunk(
   "room/fetchResult",
   async (roomId: string, { dispatch }) => {
     try {
-      dispatch(setLoadingResult(true));
+      dispatch(setLoading(true));
       const response = await fetch(`/api/v1/ideas/meetings/${roomId}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
@@ -149,14 +152,17 @@ export const fetchResult = createAsyncThunk(
       console.error("Error fetching result:", error);
       throw error;
     } finally {
-      dispatch(setLoadingResult(false));
+      dispatch(setLoading(false));
     }
   }
 );
 
 export const patchGoal = createAsyncThunk(
   "room/patchGoal",
-  async ({ goal, meetingId }: { goal: string; meetingId: number }, { dispatch }) => {
+  async (
+    { goal, meetingId }: { goal: string; meetingId: number },
+    { dispatch }
+  ) => {
     try {
       dispatch(setLoading(true));
       const response = await fetch(`/api/v1/meetings/${meetingId}`, {
@@ -218,11 +224,15 @@ export const endSessionAndGetResult = createAsyncThunk(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: goal, ideas }),
       });
-      if (!aiResponse.ok) throw new Error(`AI feedback request failed: ${aiResponse.statusText}`);
+      if (!aiResponse.ok)
+        throw new Error(`AI feedback request failed: ${aiResponse.statusText}`);
       const aiData = await aiResponse.json();
-      if (!aiData.results || !aiData.metadata) throw new Error("Invalid AI response format");
+      if (!aiData.results || !aiData.metadata)
+        throw new Error("Invalid AI response format");
 
-      dispatch(setResult({ result: aiData.results, metadata: aiData.metadata }));
+      dispatch(
+        setResult({ result: aiData.results, metadata: aiData.metadata })
+      );
 
       const [ideasResponse, summaryResponse] = await Promise.all([
         fetch(`/api/v1/ideas`, {
@@ -243,8 +253,10 @@ export const endSessionAndGetResult = createAsyncThunk(
         }),
       ]);
 
-      if (!ideasResponse.ok) throw new Error(`Ideas API failed: ${ideasResponse.statusText}`);
-      if (!summaryResponse.ok) throw new Error(`Summary API failed: ${summaryResponse.statusText}`);
+      if (!ideasResponse.ok)
+        throw new Error(`Ideas API failed: ${ideasResponse.statusText}`);
+      if (!summaryResponse.ok)
+        throw new Error(`Summary API failed: ${summaryResponse.statusText}`);
 
       const ideasData = await ideasResponse.json();
       const summaryData = await summaryResponse.json();
@@ -277,7 +289,10 @@ export const fetchPastRooms = createAsyncThunk(
 
 export const updateVotes = createAsyncThunk(
   "room/updateVotes",
-  async ({ title, votes, id }: { title: string; votes: number, id: string }, { }) => {
+  async (
+    { title, votes, id }: { title: string; votes: number; id: string },
+    {}
+  ) => {
     try {
       const client = createClient();
       const { data, error } = await client
