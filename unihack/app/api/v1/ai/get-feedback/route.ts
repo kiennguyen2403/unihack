@@ -76,6 +76,55 @@ Now generate the response in **valid JSON format only**.
       parsedResponse = JSON.parse(responseContent);
       console.log("Successfully parsed response:", parsedResponse);
     } catch (error) {
+      let validJson = false;
+      let retries = 0;
+      while (validJson === false || retries < 3) {
+        try {
+          const validateJsonMsg = ` 
+Your task is to convert the following malformed JSON into valid, parseable JSON that strictly follows this structure:
+{
+  "results": [
+    { 
+      "title": "string",
+      "explanation": "string"
+    }
+  ],
+  "metadata": { "additionalInfo": "string" }
+}
+
+CRITICAL INSTRUCTIONS:
+1. Your entire response must be ONLY valid JSON.
+2. Do not include code blocks, quotation marks around the JSON, or any explanatory text.
+3. Do not include "\`\`\`json" or "\`\`\`" markers.
+4. Preserve all original content while fixing syntax issues.
+5. Your response should pass JSON.parse() without modification.
+
+Malformed JSON to fix:
+${responseContent}
+          `
+          const validateJsonResponse = await anthropic.messages.create({
+            model: "claude-3-7-sonnet-20250219",
+            max_tokens: 20000,
+            temperature: 1,
+            messages: [
+              { role: "user", content: [{ type: "text", text: validateJsonMsg }] },
+            ],
+            thinking: {
+              "type": "enabled",
+              "budget_tokens": 43999
+            }
+          });
+          if (validateJsonResponse.content[0].type === "text") {
+            responseContent = validateJsonResponse.content[0].text;
+          }
+          parsedResponse = JSON.parse(responseContent);
+          validJson = true;
+          return NextResponse.json(parsedResponse);
+        }
+        catch (error) {
+          retries++;
+        }
+      }
       console.error("Failed to parse AI response as JSON:", responseContent);
       throw new Error("AI returned invalid JSON format");
     }
