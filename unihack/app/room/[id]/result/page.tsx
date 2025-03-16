@@ -1,18 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import { fetchResult, getRoomDetails } from "@/store/slices/roomSlice";
+import {
+  fetchResult,
+  getRoomDetails,
+  updateResultVote,
+  updateVotes,
+} from "@/store/slices/roomSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import ResultIdeaCard from "./ResultIdeaCard";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
+import { BrainstormResult } from "@/utils/types";
 
 export default function ResultPage() {
   const dispatch = useDispatch<AppDispatch>();
   const params = useParams(); // Get params dynamically
+  const channel = useRef<RealtimeChannel | null>(null);
 
   const { result, resultMetadata, loadingResult, roomDetails } = useSelector(
     (state: RootState) => state.room
@@ -20,12 +29,62 @@ export default function ResultPage() {
 
   const id = params?.id as string | undefined;
 
+  const handleVoting = async (item: BrainstormResult) => {
+    try {
+      if (!id) return;
+      await dispatch(
+        updateVotes({ title: item.title, votes: (item.votes ?? 0) + 1, id })
+      ).unwrap();
+    } catch (error) {
+      console.error("Error updating vote:", error);
+    }
+  };
+
   useEffect(() => {
-    if (id) {
-      if (!result) {
-        dispatch(fetchResult(id));
-        dispatch(getRoomDetails(parseInt(id)));
+    if (id && !channel.current) {
+      const client = createClient(); // Assuming createClient is defined elsewhere
+      channel.current = client.channel(`votingRoom:${id}`, {
+        config: {
+          broadcast: {
+            self: false,
+          },
+        },
+      });
+
+      channel.current
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "ideas",
+            filter: `meeting_id=eq.${id}`, // Fixed filter syntax and using the `id` variable
+          },
+          (payload) => {
+            const updatedIdea = payload.new;
+            dispatch(
+              updateResultVote({
+                id: updatedIdea.id,
+                votes: updatedIdea.votes,
+              })
+            );
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      if (channel.current) {
+        channel.current.unsubscribe();
+        channel.current = null;
       }
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (id && !result) {
+      dispatch(fetchResult(id));
+      dispatch(getRoomDetails(parseInt(id)));
     }
   }, [dispatch, id, result]);
 
@@ -78,6 +137,8 @@ export default function ResultPage() {
                 key={index}
                 title={item.title}
                 explanation={item.explanation}
+                stars={item.votes}
+                onStarClick={() => handleVoting(item)}
               />
             ))}
           </div>
