@@ -33,7 +33,7 @@ const CreateRoomPage = () => {
 
   const handleCreateRoom = () => {
     if (!goal.trim() || !user?.id) return;
-    dispatch(createRoom(goal));
+    dispatch(createRoom({ goal, userId: user?.id }));
   };
 
   const handleJoinRoom = () => {

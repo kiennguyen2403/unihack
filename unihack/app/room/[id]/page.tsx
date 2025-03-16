@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/store";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,7 +22,9 @@ import { getDataFromLocalStorage } from "@/store/slices/userSlice";
 const RoomPage = () => {
   const { roomDetails, loading } = useAppSelector((state) => state.room);
   const { user } = useAppSelector((state) => state.auth);
-  const { role, roomId: userRoomId } = useAppSelector((state) => state.user);
+  const { role: reduxRole, roomId: userRoomId } = useAppSelector(
+    (state) => state.user
+  );
   const dispatch = useAppDispatch();
   const [editableGoal, setEditableGoal] = useState(roomDetails?.goal || "");
   const [isEditing, setIsEditing] = useState(false);
@@ -55,13 +56,13 @@ const RoomPage = () => {
 
   // Determine if user is host
   useEffect(() => {
-    console.log(role === "host" && userRoomId == roomId);
-    if (role === "host" && userRoomId == roomId) {
+    console.log(reduxRole === "host" && userRoomId == roomId);
+    if (reduxRole === "host" && userRoomId == roomId) {
       setIsHost(true);
     } else {
       setIsHost(false);
     }
-  }, [role, userRoomId, roomId]);
+  }, [reduxRole, userRoomId, roomId]);
 
   // Real-time subscription setup
   useEffect(() => {
@@ -98,19 +99,38 @@ const RoomPage = () => {
         },
         (payload) => {
           const newEvent = payload.new;
+          console.log("New event:", newEvent);
           if (newEvent.user_id) {
             handleMemberInsert(newEvent.user_id, newEvent.role);
           }
         }
       )
       .on("broadcast", { event: "START_SESSION" }, () => {
-        console.log("Starting session");
         router.push(`/room/${roomId}/session`);
       })
-      .subscribe((status) => {
+      .on("broadcast", { event: "LEAVE_ROOM" }, () => {
+        router.push(`/user`);
+      })
+      .subscribe(async (status) => {
         console.log("Subscription status:", status);
         if (status === "SUBSCRIBED") {
           fetchInitialMembers();
+        } else {
+          await client
+            .from("events")
+            .update({
+              status: "LEAVE",
+            })
+            .eq("meeting_id", roomId)
+            .eq("user_id", currentUserId);
+
+          if (channel.current && isHost) {
+            channel.current.send({
+              type: "broadcast",
+              event: "LEAVE_ROOM",
+              payload: {},
+            });
+          }
         }
       });
 
@@ -157,28 +177,26 @@ const RoomPage = () => {
       const client = createClient();
       const { data, error } = await client
         .from("events")
-        .select("user_id, role") // Fetch both user_id and role
+        .select("user_id, role")
         .eq("meeting_id", roomId);
 
       if (error) throw error;
 
       const newMembers =
         data?.map((event: { user_id: string; role: string | null }) => {
+          console.log("Event:", event);
           if (event.user_id === currentUserId) {
-            // Use actual user data for current user
             return {
               id: event.user_id,
               email: user?.email || "You",
-              role: event.role || "ATTENDEE", // Preserve role from events or default to ATTENDEE
-            };
-          } else {
-            // Generate random name and set role to ATTENDEE for others
-            return {
-              id: event.user_id,
-              email: generateRandomName(),
-              role: "ATTENDEE",
+              role: event.role || reduxRole || "ATTENDEE",
             };
           }
+          return {
+            id: event.user_id,
+            email: generateRandomName(),
+            role: event.role || "ATTENDEE",
+          };
         }) || [];
       setMembers(newMembers);
     } catch (error) {
@@ -189,49 +207,58 @@ const RoomPage = () => {
   // Handle member update from real-time subscription
   const handleMemberUpdate = (userId: string, role: string) => {
     setMembers((prev) => {
-      const exists = prev.some((m) => m.id === userId);
-      if (!exists) {
+      const existsIndex = prev.findIndex((m) => m.id === userId);
+      if (existsIndex !== -1) {
+        const updatedMembers = [...prev];
+        updatedMembers[existsIndex] = {
+          ...updatedMembers[existsIndex],
+          role: role || updatedMembers[existsIndex].role,
+        };
+        return updatedMembers;
+      } else {
         if (userId === currentUserId) {
           return [
             ...prev,
             {
               id: userId,
               email: user?.email || "You",
-              role: role || role, // Use role from event or Redux
+              role: role || reduxRole || "ATTENDEE",
             },
           ];
-        } else {
-          return [
-            ...prev,
-            { id: userId, email: generateRandomName(), role: "ATTENDEE" },
-          ];
         }
+        return [
+          ...prev,
+          {
+            id: userId,
+            email: generateRandomName(),
+            role: role || "ATTENDEE",
+          },
+        ];
       }
-      return prev; // If already exists, no change
     });
   };
 
   // Handle member insert from real-time subscription
   const handleMemberInsert = (userId: string, role: string) => {
-    setMembers((prev) => {
-      if (!prev.some((m) => m.id === userId)) {
-        if (userId === currentUserId) {
-          return [
-            ...prev,
-            {
-              id: userId,
-              email: user?.email || "You",
-              role: role || role, // Use role from event or Redux
-            },
-          ];
-        } else {
-          return [
-            ...prev,
-            { id: userId, email: generateRandomName(), role: "ATTENDEE" },
-          ];
-        }
-      }
-      return prev;
+    setMembers((prevMembers) => {
+      if (prevMembers.some((m) => m.id === userId)) return prevMembers;
+      console.log("User ID:", userId);
+      const newMembers = [
+        ...prevMembers,
+        {
+          id: userId,
+          email:
+            userId === currentUserId
+              ? user?.email || "You"
+              : generateRandomName(),
+          role:
+            userId === currentUserId
+              ? role || reduxRole || "ATTENDEE"
+              : role || "ATTENDEE",
+        },
+      ];
+      console.log("New Members:", newMembers);
+      return newMembers;
     });
   };
 
@@ -299,16 +326,14 @@ const RoomPage = () => {
           <div>
             <Label className="text-lg">Members</Label>
             <div className="flex flex-wrap gap-2 mt-4">
-              <Badge variant="secondary" className="text-sm py-2 px-4">
-                {user?.email || "You"} ({role?.toUpperCase()})
-              </Badge>
               {members.map((member) => (
                 <Badge
                   key={member.id}
                   variant="secondary"
                   className="text-sm py-2 px-4"
                 >
-                  {member.email} ({member.role.toUpperCase()})
+                  {member.email} (
+                  {member.role.toUpperCase() === "HOST" ? "HOST" : "ATTENDEE"})
                 </Badge>
               ))}
             </div>
