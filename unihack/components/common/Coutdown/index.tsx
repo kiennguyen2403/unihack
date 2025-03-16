@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 
 const Countdown = ({ onEnd }: { onEnd: () => void }) => {
-  const [timeLeft, setTimeLeft] = useState(10 * 1000); // 2 minutes in milliseconds
+  const [timeLeft, setTimeLeft] = useState(120 * 1000); // 2 minutes in milliseconds
   const timerRef = useRef<NodeJS.Timeout | null>(null); // Store interval reference
   const hasEndedRef = useRef(false);
 

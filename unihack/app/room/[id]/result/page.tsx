@@ -132,18 +132,20 @@ export default function ResultPage() {
           <h1 className="text-2xl font-bold">
             {"Goal:  " + roomDetails?.goal}
           </h1>
-          <div className="space-y-4">
-            {result.map((item, index) => (
-              <ResultIdeaCard
-                key={index}
-                title={item.title}
-                explanation={item.explanation}
-                stars={item.votes}
-                onStarClick={() => handleVoting(item)}
-                id={item.id?.toString()}
-              />
-            ))}
-          </div>
+          {result && (
+            <div className="space-y-4">
+              {result.map((item, index) => (
+                <ResultIdeaCard
+                  key={index}
+                  title={item.title}
+                  explanation={item.explanation}
+                  stars={item.votes}
+                  onStarClick={() => handleVoting(item)}
+                  id={item.id?.toString()}
+                />
+              ))}
+            </div>
+          )}
           {resultMetadata && (
             <Card className="w-full">
               <CardHeader className="py-3">
